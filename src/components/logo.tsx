@@ -26,8 +26,8 @@ export function LogoMark({ className = "size-9" }: { className?: string }) {
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`font-bold tracking-tight ${className}`}>
-      <span className="text-blue">TELI</span>
-      <span className="text-green">TALL</span>
+      <span className="text-blue">Teli</span>
+      <span className="text-green">Tol</span>
     </span>
   );
 }

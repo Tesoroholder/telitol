@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authClient, signIn } from "@/lib/auth/client";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ErrorNote, PrimaryButton, SecondaryButton, TextField } from "@/components/fields";
 import { LogoMark, Wordmark } from "@/components/logo";
 
@@ -13,12 +14,17 @@ function authMessage(error: AuthError, fallback: string) {
 }
 
 function LoginPage() {
+  const { user, isPending } = useCurrentUserState();
   const [mode, setMode] = useState<"up" | "in">("up");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+
+  if (!isPending && user && !user.isDevFallback) {
+    return <Navigate to="/" />;
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -43,13 +49,21 @@ function LoginPage() {
           password,
           name: name.trim(),
         });
-        if (result.error) setError(authMessage(result.error, "Could not create that account."));
+        if (result.error) {
+          setError(authMessage(result.error, "Could not create that account."));
+        } else {
+          window.location.href = "/";
+        }
       } else {
         const result = await authClient.signIn.email({
           email: email.trim(),
           password,
         });
-        if (result.error) setError(authMessage(result.error, "Those details didn't match."));
+        if (result.error) {
+          setError(authMessage(result.error, "Those details didn't match."));
+        } else {
+          window.location.href = "/";
+        }
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "That didn't work. Try again.");
@@ -168,6 +182,9 @@ function LoginPage() {
               </SecondaryButton>
             ))}
           </div>
+          <p className="mt-3 text-center text-xs text-muted">
+            Tip: Email & Password sign-up works immediately without third-party accounts.
+          </p>
         </section>
       </div>
     </main>

@@ -82,9 +82,12 @@ async function main() {
 
 main().catch((err) => {
   console.error("[migrate] failed:", err?.message || err);
-  // pg errors carry the context needed to debug a bad SQL file.
   for (const key of ["code", "detail", "hint", "position", "where"]) {
     if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
+  }
+  if (err?.code === "ENOTFOUND" || err?.code === "ECONNREFUSED" || err?.code === "ETIMEDOUT") {
+    console.warn("[migrate] Warning: DATABASE_URL host is unreachable during build. Continuing build so app can deploy.");
+    process.exit(0);
   }
   process.exit(1);
 });

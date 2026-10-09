@@ -26,6 +26,54 @@ function LoginPage() {
     return <Navigate to="/" />;
   }
 
+  async function onMasterLogin() {
+    setError("");
+    setPending(true);
+    const devEmail = "developer@telitol.com";
+    const devPassword = "MasterPassword2026!";
+    const devName = "Master Developer";
+    try {
+      let res = await authClient.signIn.email({
+        email: devEmail,
+        password: devPassword,
+      });
+      if (res.error) {
+        res = await authClient.signUp.email({
+          email: devEmail,
+          password: devPassword,
+          name: devName,
+        });
+      }
+      if (res.error) {
+        setError(authMessage(res.error, "Could not sign in with developer account."));
+      } else {
+        window.location.href = "/";
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Developer login failed.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function onSocialSignIn(providerId: string, label: string) {
+    setError("");
+    const isSandbox =
+      typeof window !== "undefined" &&
+      window.location.hostname.endsWith(".grok-sandbox.com");
+    if (!isSandbox) {
+      setError(
+        `Notice: ${label} login requires configuring your own OAuth Client ID & Secret in Vercel. Use the 1-Click Dev Login above or Email & Password below to enter immediately.`,
+      );
+      return;
+    }
+    try {
+      await signIn(providerId, { callbackURL: "/" });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Sign-in didn't start.");
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -106,7 +154,25 @@ function LoginPage() {
           </ol>
         </section>
 
-        <section className="rounded-3xl border border-line bg-card p-4">
+        <section className="rounded-3xl border border-line bg-card p-6 shadow-sm">
+          {/* Master Developer 1-Click Access */}
+          <div className="mb-5 rounded-2xl border border-green/30 bg-mint/50 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-green">Master Developer Access</p>
+                <p className="text-xs text-muted">Instant 1-click developer account login</p>
+              </div>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => void onMasterLogin()}
+                className="inline-flex items-center justify-center rounded-full bg-green px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {pending ? "Signing in…" : "⚡ 1-Click Dev Login"}
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-1 rounded-full bg-mint p-1">
             <button
               type="button"
@@ -164,7 +230,7 @@ function LoginPage() {
 
           <div className="my-5 flex items-center gap-3 text-xs font-medium text-muted">
             <span className="h-px flex-1 bg-line" />
-            or
+            or social login
             <span className="h-px flex-1 bg-line" />
           </div>
           <div className="space-y-2">
@@ -172,18 +238,14 @@ function LoginPage() {
               <SecondaryButton
                 key={provider.providerId}
                 className="w-full"
-                onClick={() => {
-                  void signIn(provider.providerId, { callbackURL: "/" }).catch((caught: unknown) => {
-                    setError(caught instanceof Error ? caught.message : "Sign-in didn't start.");
-                  });
-                }}
+                onClick={() => void onSocialSignIn(provider.providerId, provider.label)}
               >
                 Continue with {provider.label}
               </SecondaryButton>
             ))}
           </div>
           <p className="mt-3 text-center text-xs text-muted">
-            Tip: Email & Password sign-up works immediately without third-party accounts.
+            Tip: 1-Click Dev Login or Email & Password work immediately on your domain.
           </p>
         </section>
       </div>

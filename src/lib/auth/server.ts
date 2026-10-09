@@ -183,6 +183,25 @@ const grokOAuthPlugin = authConfigured
     })
   : null;
 
+const googleClientId = env("GOOGLE_CLIENT_ID");
+const googleClientSecret = env("GOOGLE_CLIENT_SECRET");
+const twitterClientId = env("TWITTER_CLIENT_ID") ?? env("X_CLIENT_ID");
+const twitterClientSecret = env("TWITTER_CLIENT_SECRET") ?? env("X_CLIENT_SECRET");
+
+const socialProviders: Record<string, { clientId: string; clientSecret: string }> = {};
+if (googleClientId && googleClientSecret) {
+  socialProviders.google = {
+    clientId: googleClientId,
+    clientSecret: googleClientSecret,
+  };
+}
+if (twitterClientId && twitterClientSecret) {
+  socialProviders.twitter = {
+    clientId: twitterClientId,
+    clientSecret: twitterClientSecret,
+  };
+}
+
 export const auth = betterAuth({
   baseURL,
   // Deployed apps inject BETTER_AUTH_SECRET. Preview: process-stable secret on
@@ -198,6 +217,9 @@ export const auth = betterAuth({
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
+  // Native social providers when developer configures their own OAuth keys
+  ...(Object.keys(socialProviders).length > 0 ? { socialProviders } : {}),
+
   // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
   // as trusted first-party identities. The broker owns identity and X emails are
   // synthetic/unverified, so WITHOUT this a login can fail with
@@ -209,6 +231,8 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: [
+        "google",
+        "twitter",
         ...GROK_PROVIDERS.map((p) => p.providerId),
         GATE_PROVIDER_ID,
       ],

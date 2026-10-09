@@ -89,19 +89,22 @@ function LoginPage() {
 
   async function onSocialSignIn(providerId: string, label: string) {
     setError("");
-    const isSandbox =
-      typeof window !== "undefined" &&
-      window.location.hostname.endsWith(".grok-sandbox.com");
-    if (!isSandbox) {
-      setError(
-        `Notice: ${label} login requires configuring your own OAuth Client ID & Secret in Vercel. Use the 1-Click Dev Login above or Email & Password below to enter immediately.`,
-      );
-      return;
-    }
+    const providerKey = providerId.includes("google") ? "google" : "twitter";
     try {
-      await signIn(providerId, { callbackURL: "/" });
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Sign-in didn't start.");
+      const res = await authClient.signIn.social({
+        provider: providerKey as any,
+        callbackURL: "/",
+      });
+      if (res?.error) {
+        throw new Error(res.error.message);
+      }
+      return;
+    } catch {
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://telitol-67uk.vercel.app";
+      const redirectUri = `${origin}/api/auth/callback/${providerKey}`;
+      setError(
+        `To connect ${label}: add ${providerKey === "google" ? "GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET" : "TWITTER_CLIENT_ID & TWITTER_CLIENT_SECRET"} to Vercel. Set Redirect URI in ${label} Console to: ${redirectUri}`,
+      );
     }
   }
 

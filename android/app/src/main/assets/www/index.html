@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>TeliTall</title>
+  <style>
+    :root {
+      --paper: #f4f7f5;
+      --card: #ffffff;
+      --ink: #0b2340;
+      --muted: #5c6d7e;
+      --line: #d5e2db;
+      --green: #0e9f6e;
+      --blue: #1b5fd1;
+      --mint: #e7f4ee;
+      --on-green: #f4fff9;
+      --on-ink: #f4faf7;
+      --shadow: 0 1px 2px rgb(11 35 64 / 0.04);
+      font-family: "Outfit", "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--paper); }
+    button, input, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: default; }
+    #app { height: 100dvh; display: flex; flex-direction: column; max-width: 36rem; margin: 0 auto; background: var(--paper); }
+    header { height: 3.5rem; display: flex; align-items: center; gap: 0.5rem; padding: 0 1rem; background: var(--card); border-bottom: 1px solid var(--line); flex: none; }
+    main { flex: 1; overflow-y: auto; padding: 1.25rem 1rem 1.5rem; }
+    nav { display: flex; background: var(--card); border-top: 1px solid var(--line); flex: none; padding-bottom: env(safe-area-inset-bottom); }
+    nav button { flex: 1; min-height: 3.5rem; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem; font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+    nav button[aria-current="page"] { color: var(--green); }
+    h1 { font-size: 1.5rem; line-height: 1.25; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+    h2 { font-size: 1.125rem; line-height: 1.35; font-weight: 600; margin: 0.5rem 0 0; }
+    p { margin: 0; }
+    .muted { color: var(--muted); }
+    .green { color: var(--green); }
+    .blue { color: var(--blue); }
+    .lead { margin-top: 0.5rem; font-size: 0.875rem; color: var(--muted); }
+    .stack { display: grid; gap: 0.75rem; }
+    .stack-lg { display: grid; gap: 1.25rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 1.5rem; padding: 1rem; box-shadow: var(--shadow); text-align: left; }
+    .card.mint { background: var(--mint); }
+    a.card, button.card { display: block; width: 100%; text-decoration: none; }
+    .search { height: 3rem; width: 100%; border-radius: 999px; border: 1px solid var(--line); background: var(--card); padding: 0 1rem; outline: none; }
+    .search:focus { border-color: var(--green); }
+    .chips { display: flex; gap: 0.5rem; overflow-x: auto; margin: 0 -1rem; padding: 0 1rem; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { height: 2.5rem; flex: none; border-radius: 999px; padding: 0 1rem; border: 1px solid var(--line); background: var(--card); font-size: 0.875rem; font-weight: 500; }
+    .chip.on { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+    .primary, .secondary { height: 2.75rem; border-radius: 999px; padding: 0 1rem; font-size: 0.875rem; font-weight: 600; border: 0; }
+    .primary { background: var(--green); color: var(--on-green); }
+    .secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .full { width: 100%; }
+    label { display: grid; gap: 0.35rem; font-size: 0.875rem; font-weight: 500; }
+    input[type="text"], textarea { width: 100%; border: 1px solid var(--line); background: var(--card); border-radius: 1rem; padding: 0.75rem 0.9rem; outline: none; }
+    textarea { min-height: 8rem; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--green); }
+    .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; background: var(--mint); padding: 0.25rem; border-radius: 999px; }
+    .switch button { height: 2.75rem; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-weight: 600; font-size: 0.875rem; }
+    .switch button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+    .error { color: #9f2d2d; font-size: 0.875rem; font-weight: 500; }
+    .meta { margin-top: 0.75rem; font-size: 0.875rem; color: var(--muted); }
+    .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .boot { min-height: 100dvh; display: grid; place-items: center; text-align: center; gap: 0.75rem; }
+    .boot p { letter-spacing: 0.04em; font-weight: 500; }
+    .word { font-weight: 700; letter-spacing: -0.03em; font-size: 1.15em; }
+    .row-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .pill { height: 2.25rem; border-radius: 999px; padding: 0 0.8rem; border: 1px solid var(--line); background: var(--card); font-size: 0.8125rem; font-weight: 600; }
+    .pill.on { background: var(--mint); border-color: transparent; color: var(--green); }
+    .best { font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.04em; text-transform: uppercase; }
+    .bubble { border-radius: 1.25rem; padding: 0.8rem 0.9rem; font-size: 0.9375rem; line-height: 1.45; }
+    .bubble.user { background: var(--ink); color: var(--on-ink); margin-left: 2rem; }
+    .bubble.assistant { background: var(--card); border: 1px solid var(--line); margin-right: 1rem; }
+    .who { font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--muted); }
+    .composer { display: grid; gap: 0.5rem; }
+    .stat { font-size: 1.875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .linkish { background: none; border: 0; padding: 0; color: var(--green); font-weight: 600; font-size: 0.875rem; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const CATS = [
+      ["relationships", "Relationships"],
+      ["life", "Life"],
+      ["career", "Career"],
+      ["education", "Education"],
+      ["mathematics", "Mathematics"],
+      ["technology", "Technology"],
+      ["business", "Business"],
+      ["health", "Health"],
+      ["home", "Home"],
+      ["other", "Other"]
+    ];
+    const CAT_LABEL = Object.fromEntries(CATS);
+    const KEY = "telitall.phone.v1";
+    const CRISIS = /\b(suicid|kill myself|killing myself|self[-\s]?harm|end my life|want to die|do not want to live|don't want to live)\b/i;
+    const CRISIS_REPLY = "I'm glad you said this out loud. I'm not the right help for it, and you deserve a person right now. If you might hurt yourself, contact local emergency services. In India you can call iCall at 9152987821 or AASRA at 9820466726. If you can, tell someone who is near you.";
+
+    function esc(value) {
+      return String(value).replace(/[&<>"']/g, (ch) => "&#" + ch.charCodeAt(0) + ";");
+    }
+    function hoursAgo(hours) { return new Date(Date.now() - hours * 3600 * 1000).toISOString(); }
+    function repLabel(points) {
+      if (points >= 60) return "Guide";
+      if (points >= 30) return "Trusted";
+      if (points >= 10) return "Helper";
+      return "New voice";
+    }
+    function formatWhen(iso) {
+      const t = Date.parse(iso);
+      if (!Number.isFinite(t)) return "";
+      const seconds = Math.max(0, Date.now() - t) / 1000;
+      if (seconds < 60) return "just now";
+      if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+      if (seconds < 86400) return Math.floor(seconds / 3600) + "h ago";
+      if (seconds < 86400 * 7) return Math.floor(seconds / 86400) + "d ago";
+      return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+    function kindLabel(kind) { return kind === "knowledge" ? "Knowledge" : "Experience"; }
+
+    function seed() {
+      return {
+        nextId: 100,
+        name: "",
+        reputation: 0,
+        reps: {
+          "seed:nila": 1, "seed:arun": 1, "seed:divya": 1, "seed:sam": 1, "seed:leila": 1, "seed:jonah": 1,
+          "seed:ama": 31, "seed:kofi": 20, "seed:meera": 22, "seed:luis": 18, "seed:priya": 16, "seed:hana": 28
+        },
+        votes: [],
+        questions: [
+          { id: 1, userId: "seed:nila", authorName: "Nila", title: "What did your first heartbreak actually feel like?", body: "I do not want the poster version. I want the real one. What did the first weeks feel like, and what actually helped you get through them?", category: "relationships", kind: "experience", createdAt: hoursAgo(2) },
+          { id: 2, userId: "seed:arun", authorName: "Arun", title: "How do I prepare for a job interview with almost no experience?", body: "I have one campus project and a part-time shop job. I freeze when they ask me to walk us through your experience. What did you actually say when you had almost nothing on paper?", category: "career", kind: "experience", createdAt: hoursAgo(24) },
+          { id: 3, userId: "seed:divya", authorName: "Divya", title: "What surprised you about moving to a new city alone?", body: "I am about to move with two bags and nobody waiting at the station. I want the unpretty version of the first month, not a travel list.", category: "life", kind: "experience", createdAt: hoursAgo(48) },
+          { id: 4, userId: "seed:sam", authorName: "Sam", title: "How do you study when your mind keeps wandering?", body: "I sit down for three hours and remember none of it. What actually works when the task feels too big to start?", category: "education", kind: "knowledge", createdAt: hoursAgo(72) },
+          { id: 5, userId: "seed:leila", authorName: "Leila", title: "What helped you sleep again after a stressful season?", body: "After exams I was exhausted and wide awake. I am not looking for a medical plan. I want what your nights were actually like, and what you changed.", category: "health", kind: "experience", createdAt: hoursAgo(96) },
+          { id: 6, userId: "seed:jonah", authorName: "Jonah", title: "Why do we complete the square, in plain language?", body: "I can follow the steps and still not know why anyone would do this. Can someone explain the idea, not just the recipe?", category: "mathematics", kind: "knowledge", createdAt: hoursAgo(144) }
+        ],
+        answers: [
+          { id: 11, questionId: 1, userId: "seed:ama", authorName: "Ama", helpful: 24, isBest: true, createdAt: hoursAgo(1.5), body: "The first week I kept checking my phone like it was a door. What helped was not a quote. I told one friend the unpretty version, and I walked at the same time every evening so the day had an edge. It did not feel better. It felt less endless." },
+          { id: 12, questionId: 1, userId: "seed:kofi", authorName: "Kofi", helpful: 18, isBest: false, createdAt: hoursAgo(1.16), body: "I thought I was handling it until a song started in a shared auto. I got off two stops early and just stood there. The useful part was stopping the attempt to win the story. I wrote what I wished I had said, and I did not send it. After about a month the song was just a song again. Not gone. Quieter." },
+          { id: 13, questionId: 2, userId: "seed:meera", authorName: "Meera", helpful: 15, isBest: true, createdAt: hoursAgo(20), body: "I wrote three stories in this shape: the situation, what I did, what changed. Interviewers do not need a career. They need to see how you think when something is messy. I practiced out loud until I stopped apologizing for being new. The shop job counted. A rude customer and a calm fix is a story." },
+          { id: 14, questionId: 3, userId: "seed:luis", authorName: "Luis", helpful: 11, isBest: true, createdAt: hoursAgo(36), body: "I moved with two bags and no one at the station. The surprise was how loud loneliness is at 9pm, and how much a tiny routine fixes before new friends do. A tea stall learned my order before anyone learned my name. Start there. One place you go at the same time every day." },
+          { id: 15, questionId: 5, userId: "seed:priya", authorName: "Priya", helpful: 9, isBest: true, createdAt: hoursAgo(72), body: "This is only what I lived, not medical advice. I was tired and awake at the same time. What changed it was a boring wind-down I kept even when it felt pointless: phone in another room, lights low, a paper book I did not care about. It took about two weeks before my body believed the night was over." },
+          { id: 16, questionId: 6, userId: "seed:hana", authorName: "Hana", helpful: 21, isBest: true, createdAt: hoursAgo(120), body: "Completing the square forces a quadratic to look like (something) squared plus a leftover number, because squares are easy to undo with a square root. For x squared + 6x, ask what was doubled to make 6. That is 3. Square it to get 9. Add and subtract 9 so the value does not change. Then (x+3) squared - 9 is sitting in front of you, and you can take the root." }
+        ],
+        threads: []
+      };
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return seed();
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.questions) || !Array.isArray(data.answers)) return seed();
+        return data;
+      } catch (error) {
+        return seed();
+      }
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(db)); }
+
+    let db = load();
+    let ui = { screen: "boot", category: "all", query: "", qid: null, threadId: null, error: "", notice: "", kind: "experience", stack: [], confirmDelete: false };
+
+    function displayName() {
+      const name = String(db.name || "").trim();
+      return name || "Member";
+    }
+    function reputationOf(userId) {
+      if (userId === "me") return Number(db.reputation) || 0;
+      return Number(db.reps && db.reps[userId]) || 0;
+    }
+    function bump(userId, delta) {
+      if (!userId || String(userId).startsWith("seed:")) return;
+      if (userId === "me") db.reputation = Math.max(0, (Number(db.reputation) || 0) + delta);
+      else {
+        db.reps = db.reps || {};
+        db.reps[userId] = Math.max(0, (Number(db.reps[userId]) || 0) + delta);
+      }
+    }
+    function answersFor(id) { return db.answers.filter((answer) => answer.questionId === id); }
+    function questionById(id) { return db.questions.find((question) => question.id === id) || null; }
+
+    function logo(size) {
+      const s = size || 36;
+      return '<svg viewBox="0 0 64 64" width="' + s + '" height="' + s + '" aria-hidden="true"><circle cx="20" cy="16" r="8" fill="#1b5fd1"/><path d="M6 46c1.2-11 8-16 15.5-16 3.2 0 5.8 1 8.2 3.2-4.2 1.6-7.2 5.4-8.2 10.2L6 46Z" fill="#1b5fd1"/><circle cx="46" cy="15" r="8" fill="#0e9f6e"/><path d="M34 48c1.6-10 8.4-16 16.5-16 5.4 0 10 2.6 12.5 7.2-6.6 1.2-12.2 4.6-16.2 9.6L34 48Z" fill="#0e9f6e"/><path d="M40 8.5v6M48.5 11.2l-3.2 4.2M31.5 11.2l3.2 4.2" stroke="#0e9f6e" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M16 30.5h22.5a11 11 0 0 1 11 11v.5a11 11 0 0 1-11 11H27l-8 6.2V52a11 11 0 0 1-8.2-4.2A11 11 0 0 1 16 30.5Z" fill="#0e9f6e"/><circle cx="27" cy="42" r="2.1" fill="#f4fff9"/><circle cx="34" cy="42" r="2.1" fill="#f4fff9"/><circle cx="41" cy="42" r="2.1" fill="#f4fff9"/></svg>';
+    }
+    function wordmark() {
+      return '<span class="word"><span class="blue">TELI</span><span class="green">TALL</span></span>';
+    }
+    function icon(name, active) {
+      const color = active ? "#0e9f6e" : "#5c6d7e";
+      if (name === "home") return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="1.75"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg>';
+      if (name === "ask") return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="1.75"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z"/></svg>';
+      if (name === "laya") return '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 6.5h10.2A3.8 3.8 0 0 1 19 10.3v.2a3.8 3.8 0 0 1-3.8 3.8H9.2L6 17.2v-2.4A3.8 3.8 0 0 1 5 10.5v-.2A3.8 3.8 0 0 1 5 6.5Z" fill="' + color + '"/><circle cx="9.2" cy="10.4" r="1" fill="#fff"/><circle cx="12.2" cy="10.4" r="1" fill="#fff"/><circle cx="15.2" cy="10.4" r="1" fill="#fff"/></svg>';
+      return '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="1.75"><circle cx="12" cy="8" r="3.2"/><path d="M5 19.2c.6-3.4 3-5.2 7-5.2s6.4 1.8 7 5.2"/></svg>';
+    }
+
+    function layaReply(prompt) {
+      if (CRISIS.test(prompt)) return CRISIS_REPLY;
+      const text = prompt.toLowerCase();
+      const health = /\b(sleep|anxiety|depress|pain|doctor|symptom|medicine|therapy)\b/.test(text);
+      const money = /\b(invest|loan|tax|salary|lawsuit|legal|rent)\b/.test(text);
+      const caution = health
+        ? "I'm not a doctor. This is a general take, not a plan for your body. "
+        : money
+          ? "I'm not a lawyer or a financial adviser. This is a general take, not advice for your case. "
+          : "";
+      let body;
+      if (/\b(heartbreak|broke up|breakup|ex)\b/.test(text)) {
+        body = "The first weeks are often less like sadness and more like a reflex: checking, rehearsing, waiting for the story to reverse. What tends to help is not a better explanation. It is one person who hears the unpretty version, and one small edge to the day, like a walk at the same hour. It usually gets quieter before it feels fine. If you want the real version from someone who lived it, ask it on TeliTall.";
+      } else if (/\b(interview|job|resume|hire)\b/.test(text)) {
+        body = "Interviewers rarely need a long career. They need to see how you think when something is messy. A useful shape is situation, what you did, what changed. A shop job, a campus project, or a rude customer you handled calmly counts. Practice out loud until you stop apologizing for being new. People on TeliTall can tell you the sentence they actually used.";
+      } else if (/\b(move|city|alone|lonely|loneliness)\b/.test(text)) {
+        body = "The surprise is usually not the new streets. It is how loud 9pm is when nobody knows your name. A tiny repeated place, a tea stall, a walk, a desk, often steadies you before friendship does. Friendship comes later, and it comes faster if the day already has an edge. Ask people who moved alone. Their first month will not match a travel list.";
+      } else if (/\b(study|focus|procrast|exam|homework)\b/.test(text)) {
+        body = "Three hours of staring is not studying. Starting is smaller than the task. A timer for twenty minutes, one concrete question to answer, and the phone in another room beats a heroic block. The mind wanders because the start is vague. Make the start a single page or a single problem, then stop on purpose. That is generally what works. The exact trick varies.";
+      } else if (/\b(complete the square|quadratic|square)\b/.test(text)) {
+        body = "Completing the square is a way to make a quadratic look like a square plus a leftover number, because squares are easy to undo with a root. For x² + 6x, ask what was doubled to make 6. That is 3. Square it, 9. Add and subtract 9 so the value does not change. Then (x+3)² − 9 is in front of you. The recipe is just that idea, repeated.";
+      } else if (/\b(sleep|insomnia|awake)\b/.test(text)) {
+        body = "A lot of people come out of a hard season tired and awake at the same time. What often changes it is a boring wind-down kept even when it feels pointless: light down, phone out of reach, something dull to read. It can take a couple of weeks before the body believes the night is over. If sleep is badly broken, a person who treats that is the right next step, not me.";
+      } else {
+        const clip = prompt.trim().replace(/\s+/g, " ").slice(0, 140);
+        body = "You asked: “" + clip + "”. What is generally true is that a useful answer separates the pattern from the exception. My take is to name the smallest next step you could actually do this week, and to notice what you are hoping someone will reassure you about. I have not lived your exact story. Post it for a person on TeliTall if you want the version that happened to someone.";
+      }
+      return (caution + body).slice(0, 1200);
+    }
+
+    function openTab(screen) {
+      ui.stack = [];
+      ui.screen = screen;
+      ui.error = "";
+      ui.notice = "";
+      ui.qid = null;
+      ui.confirmDelete = false;
+      render();
+    }
+    function push(partial) {
+      ui.stack.push({ screen: ui.screen, qid: ui.qid, threadId: ui.threadId });
+      Object.assign(ui, partial, { error: "", notice: "", confirmDelete: false });
+      render();
+    }
+    window.telitallBack = function () {
+      const prev = ui.stack.pop();
+      if (!prev) return "exit";
+      ui.screen = prev.screen;
+      ui.qid = prev.qid;
+      ui.threadId = prev.threadId;
+      ui.error = "";
+      ui.notice = "";
+      ui.confirmDelete = false;
+      render();
+      return "stay";
+    };
+
+    function shell(body) {
+      const tab = ui.screen === "q" ? "home" : ui.screen;
+      const item = (screen, name, label) =>
+        '<button type="button" data-tab="' + screen + '" aria-current="' + (tab === screen ? "page" : "false") + '">' +
+        icon(name, tab === screen) + label + "</button>";
+      return (
+        "<header>" + logo(36) + wordmark() + "</header>" +
+        "<main>" + body + "</main>" +
+        "<nav>" +
+        item("home", "home", "Home") +
+        item("ask", "ask", "Ask") +
+        item("laya", "laya", "Laya") +
+        item("you", "you", "You") +
+        "</nav>"
+      );
+    }
+
+    function homeHtml() {
+      const needle = ui.query.trim().toLowerCase();
+      const shown = db.questions.filter((question) => {
+        if (ui.category !== "all" && question.category !== ui.category) return false;
+        if (!needle) return true;
+        return (question.title + " " + question.body + " " + question.authorName).toLowerCase().includes(needle);
+      }).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+      const chips = '<button type="button" class="chip' + (ui.category === "all" ? " on" : "") + '" data-cat="all">All</button>' +
+        CATS.map(([id, label]) => '<button type="button" class="chip' + (ui.category === id ? " on" : "") + '" data-cat="' + id + '">' + label + "</button>").join("");
+      let list = "";
+      if (shown.length === 0) {
+        list = '<div class="card"><p style="font-weight:600">Nothing matches that yet.</p><p class="lead">Ask it. Someone may have lived it.</p><button class="primary" style="margin-top:1rem" data-tab="ask" type="button">Ask a person</button></div>';
+      } else {
+        list = "<ul class='stack' style='list-style:none;padding:0;margin:0'>" + shown.map((question) => {
+          const count = answersFor(question.id).length;
+          const tone = question.kind === "experience" ? "green" : "blue";
+          return '<li><button type="button" class="card" data-q="' + question.id + '">' +
+            '<p class="muted" style="font-size:.875rem"><span class="' + tone + '" style="font-weight:600">' + kindLabel(question.kind) + "</span> · " + esc(CAT_LABEL[question.category] || "Other") + "</p>" +
+            "<h2>" + esc(question.title) + "</h2>" +
+            '<p class="lead clamp">' + esc(question.body) + "</p>" +
+            '<p class="meta"><span style="font-weight:600;color:var(--ink)">' + esc(question.authorName) + "</span> · " + count + (count === 1 ? " answer" : " answers") + " · " + formatWhen(question.createdAt) + "</p>" +
+            "</button></li>";
+        }).join("") + "</ul>";
+      }
+      return shell(
+        '<div class="stack-lg">' +
+        "<div><h1>Ask a person, or ask Laya.</h1><p class='lead'>Real experiences from people. A clear reply from Laya when you want one now.</p></div>" +
+        '<div class="grid-2">' +
+        '<button type="button" class="card" data-tab="ask"><p class="green" style="font-weight:600;font-size:.875rem">Ask a person</p><p class="lead">Share a question. People answer from their own lives.</p></button>' +
+        '<button type="button" class="card mint" data-tab="laya"><p class="green" style="font-weight:600;font-size:.875rem">Ask Laya</p><p class="lead" style="color:var(--ink)">An on-device reply, right now. Not a substitute for someone’s story.</p></button>' +
+        "</div>" +
+        '<label class="sr" for="search">Search questions</label><input id="search" class="search" placeholder="Search questions" value="' + esc(ui.query) + '" />' +
+        '<div class="chips">' + chips + "</div>" +
+        list +
+        "</div>"
+      );
+    }
+
+    function askHtml() {
+      const chips = CATS.map(([id, label]) => {
+        const on = ui.askCategory === id;
+        return '<button type="button" class="chip' + (on ? " on" : "") + '" data-askcat="' + id + '">' + label + "</button>";
+      }).join("");
+      return shell(
+        '<form class="stack-lg" id="ask-form">' +
+        "<div><h1>Ask a person</h1><p class='lead'>Experience questions want a story. Knowledge questions want a clear explanation. On this phone, your question stays on the device.</p></div>" +
+        '<div class="switch">' +
+        '<button type="button" data-kind="experience" class="' + (ui.kind === "experience" ? "on" : "") + '">Experience</button>' +
+        '<button type="button" data-kind="knowledge" class="' + (ui.kind === "knowledge" ? "on" : "") + '">Knowledge</button>' +
+        "</div>" +
+        "<fieldset style='border:0;padding:0;margin:0'><legend style='font-size:.875rem;font-weight:500;margin-bottom:.5rem'>Category</legend><div style='display:flex;flex-wrap:wrap;gap:.5rem'>" + chips + "</div></fieldset>" +
+        '<label>Title<input type="text" name="title" maxlength="140" value="' + esc(ui.askTitle || "") + '" placeholder="' + (ui.kind === "experience" ? "What did it actually feel like?" : "Explain the idea, not just the steps") + '" /></label>' +
+        '<label>Detail<textarea name="body" maxlength="4000" placeholder="Enough that a stranger knows how to answer.">' + esc(ui.askBody || "") + '</textarea></label>' +
+        (ui.error ? '<p class="error">' + esc(ui.error) + "</p>" : "") +
+        '<button class="primary full" type="submit">Post question</button>' +
+        "</form>"
+      );
+    }
+
+    function questionHtml() {
+      const question = questionById(ui.qid);
+      if (!question) return shell('<div class="card"><p style="font-weight:600">That question is gone.</p><button class="linkish" data-tab="home" type="button">Back home</button></div>');
+      const answers = answersFor(question.id).slice().sort((a, b) => Number(b.isBest) - Number(a.isBest) || b.helpful - a.helpful);
+      const tone = question.kind === "experience" ? "green" : "blue";
+      const blocks = answers.map((answer) => {
+        const voted = db.votes.includes(answer.id);
+        const mine = answer.userId === "me";
+        return '<article class="card">' +
+          (answer.isBest ? '<p class="best">Best answer</p>' : "") +
+          "<p>" + esc(answer.body) + "</p>" +
+          '<p class="meta"><span style="font-weight:600;color:var(--ink)">' + esc(answer.authorName) + "</span> · " + esc(repLabel(reputationOf(answer.userId))) + " · " + formatWhen(answer.createdAt) + "</p>" +
+          '<div class="row-actions">' +
+          '<button type="button" class="pill' + (voted ? " on" : "") + '" data-vote="' + answer.id + '"' + (mine || voted ? " disabled" : "") + ">" + (voted ? "Helpful" : "Mark helpful") + " · " + answer.helpful + "</button>" +
+          (question.userId === "me" && !answer.isBest ? '<button type="button" class="pill" data-accept="' + answer.id + '">Accept</button>' : "") +
+          "</div></article>";
+      }).join("");
+      const del = question.userId === "me"
+        ? (ui.confirmDelete
+          ? '<div class="row-actions"><button type="button" class="pill" data-delete="yes">Delete this question</button><button type="button" class="pill" data-delete="no">Keep it</button></div>'
+          : '<button type="button" class="linkish" data-delete="ask">Delete question</button>')
+        : "";
+      return shell(
+        '<div class="stack-lg">' +
+        '<button type="button" class="linkish" data-tab="home">All questions</button>' +
+        "<div><p class='muted' style='font-size:.875rem'><span class='" + tone + "' style='font-weight:600'>" + kindLabel(question.kind) + "</span> · " + esc(CAT_LABEL[question.category] || "Other") + "</p>" +
+        "<h1 style='margin-top:.5rem'>" + esc(question.title) + "</h1>" +
+        "<p class='lead' style='color:var(--ink);font-size:1rem'>" + esc(question.body) + "</p>" +
+        '<p class="meta"><span style="font-weight:600;color:var(--ink)">' + esc(question.authorName) + "</span> · " + esc(repLabel(reputationOf(question.userId))) + " · " + formatWhen(question.createdAt) + "</p>" +
+        del + "</div>" +
+        (blocks || '<p class="muted">No answers yet. Yours can be the first.</p>') +
+        '<form id="answer-form" class="stack">' +
+        '<label>Your answer<textarea name="body" maxlength="4000" placeholder="A story if they asked for experience. A clear idea if they asked for knowledge."></textarea></label>' +
+        (ui.error ? '<p class="error">' + esc(ui.error) + "</p>" : "") +
+        '<button class="primary" type="submit">Post answer</button></form></div>'
+      );
+    }
+
+    function layaHtml() {
+      const threads = db.threads.slice().sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+      const thread = threads.find((item) => item.id === ui.threadId) || null;
+      const chips = '<button type="button" class="chip' + (!thread ? " on" : "") + '" data-new-thread="1">New</button>' +
+        threads.map((item) => '<button type="button" class="chip' + (thread && thread.id === item.id ? " on" : "") + '" data-thread="' + item.id + '">' + esc(item.title) + "</button>").join("");
+      const messages = thread ? thread.messages.map((message) =>
+        '<div class="bubble ' + message.role + '"><p class="who">' + (message.role === "user" ? "You" : "Laya") + "</p>" + esc(message.content) + "</div>"
+      ).join("") : '<div class="card mint"><p style="font-weight:600">Ask Laya something specific.</p><p class="lead" style="color:var(--ink)">On this phone, Laya is the companion on the device, not the live model. She is not a doctor, therapist, or a person who lived your story.</p></div>';
+      return shell(
+        '<div class="stack-lg">' +
+        "<div><h1>Laya</h1><p class='lead'>A clear reply, saved on this phone.</p></div>" +
+        '<div class="chips">' + chips + "</div>" +
+        '<div class="stack">' + messages + "</div>" +
+        '<form id="laya-form" class="composer">' +
+        '<label class="sr" for="laya-input">Message Laya</label>' +
+        '<textarea id="laya-input" name="prompt" maxlength="2000" placeholder="Ask Laya…" style="min-height:5.5rem"></textarea>' +
+        (ui.error ? '<p class="error">' + esc(ui.error) + "</p>" : "") +
+        '<button class="primary" type="submit">Ask Laya</button></form></div>'
+      );
+    }
+
+    function youHtml() {
+      const mineQ = db.questions.filter((question) => question.userId === "me").sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+      const mineA = db.answers.filter((answer) => answer.userId === "me").sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+      const qList = mineQ.length ? mineQ.map((question) =>
+        '<button type="button" class="card" data-q="' + question.id + '"><p style="font-weight:600">' + esc(question.title) + '</p><p class="meta">' + answersFor(question.id).length + " answers · " + formatWhen(question.createdAt) + "</p></button>"
+      ).join("") : '<p class="muted">You have not asked yet.</p>';
+      const aList = mineA.length ? mineA.map((answer) => {
+        const question = questionById(answer.questionId);
+        return '<button type="button" class="card" data-q="' + answer.questionId + '"><p style="font-weight:600">' + esc(question ? question.title : "Question") + '</p><p class="lead clamp">' + esc(answer.body) + '</p><p class="meta">' + answer.helpful + " helpful" + (answer.isBest ? " · best" : "") + "</p></button>";
+      }).join("") : '<p class="muted">You have not answered yet.</p>';
+      return shell(
+        '<div class="stack-lg">' +
+        "<div><h1>" + esc(displayName()) + "</h1><p class='lead'>" + esc(repLabel(db.reputation || 0)) + "</p></div>" +
+        '<section class="card"><p class="muted" style="font-size:.875rem">Reputation</p><p class="stat">' + (Number(db.reputation) || 0) + '</p><p class="lead">You earn points when you ask, answer, and when someone marks your answer helpful or best. Saved on this phone only.</p></section>' +
+        '<form id="name-form" class="stack"><label>Name on your posts<input type="text" name="name" maxlength="40" value="' + esc(db.name || "") + '" /></label>' +
+        (ui.error ? '<p class="error">' + esc(ui.error) + "</p>" : "") +
+        (ui.notice ? '<p class="green" style="font-size:.875rem;font-weight:600">' + esc(ui.notice) + "</p>" : "") +
+        '<button class="primary" type="submit">Save name</button></form>' +
+        "<section class='stack'><h2>Your questions</h2>" + qList + "</section>" +
+        "<section class='stack'><h2>Your answers</h2>" + aList + "</section></div>"
+      );
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      if (ui.screen === "boot") {
+        app.innerHTML = '<div class="boot"><div>' + logo(64) + '<div style="margin-top:.75rem;font-size:1.75rem">' + wordmark() + '</div><p class="muted" style="margin-top:.75rem">Ask · Learn · Share · Grow</p></div></div>';
+        return;
+      }
+      const html = ui.screen === "ask" ? askHtml() : ui.screen === "q" ? questionHtml() : ui.screen === "laya" ? layaHtml() : ui.screen === "you" ? youHtml() : homeHtml();
+      const focus = document.activeElement && document.activeElement.id;
+      app.innerHTML = html;
+      if (focus === "search") {
+        const input = document.getElementById("search");
+        if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+      }
+    }
+
+    document.getElementById("app").addEventListener("click", (event) => {
+      const tab = event.target.closest("[data-tab]");
+      if (tab) { openTab(tab.getAttribute("data-tab")); return; }
+      const cat = event.target.closest("[data-cat]");
+      if (cat) { ui.category = cat.getAttribute("data-cat"); render(); return; }
+      const q = event.target.closest("[data-q]");
+      if (q) { push({ screen: "q", qid: Number(q.getAttribute("data-q")) }); return; }
+      const kind = event.target.closest("[data-kind]");
+      if (kind) { ui.kind = kind.getAttribute("data-kind"); render(); return; }
+      const askcat = event.target.closest("[data-askcat]");
+      if (askcat) { ui.askCategory = askcat.getAttribute("data-askcat"); render(); return; }
+      const vote = event.target.closest("[data-vote]");
+      if (vote) { onVote(Number(vote.getAttribute("data-vote"))); return; }
+      const accept = event.target.closest("[data-accept]");
+      if (accept) { onAccept(Number(accept.getAttribute("data-accept"))); return; }
+      const del = event.target.closest("[data-delete]");
+      if (del) { onDelete(del.getAttribute("data-delete")); return; }
+      const thread = event.target.closest("[data-thread]");
+      if (thread) { ui.threadId = Number(thread.getAttribute("data-thread")); ui.error = ""; render(); return; }
+      if (event.target.closest("[data-new-thread]")) { ui.threadId = null; ui.error = ""; render(); }
+    });
+
+    document.getElementById("app").addEventListener("input", (event) => {
+      if (event.target.id === "search") {
+        ui.query = event.target.value;
+        render();
+        return;
+      }
+      if (event.target.name === "title" && event.target.form && event.target.form.id === "ask-form") ui.askTitle = event.target.value;
+      if (event.target.name === "body" && event.target.form && event.target.form.id === "ask-form") ui.askBody = event.target.value;
+    });
+
+    document.getElementById("app").addEventListener("submit", (event) => {
+      if (event.target.id === "ask-form") { event.preventDefault(); onAsk(event.target); }
+      if (event.target.id === "answer-form") { event.preventDefault(); onAnswer(event.target); }
+      if (event.target.id === "laya-form") { event.preventDefault(); onLaya(event.target); }
+      if (event.target.id === "name-form") { event.preventDefault(); onName(event.target); }
+    });
+
+    function onAsk(form) {
+      const title = form.title.value.trim();
+      const body = form.body.value.trim();
+      ui.askTitle = form.title.value;
+      ui.askBody = form.body.value;
+      if (title.length < 8) { ui.error = "Give the question a title of at least 8 characters."; render(); return; }
+      if (title.length > 140) { ui.error = "Keep the title under 140 characters."; render(); return; }
+      if (body.length < 20) { ui.error = "Add a little more detail so people know how to answer."; render(); return; }
+      if (!ui.askCategory) { ui.error = "Pick a category."; render(); return; }
+      const id = db.nextId++;
+      db.questions.push({ id, userId: "me", authorName: displayName(), title, body, category: ui.askCategory, kind: ui.kind === "knowledge" ? "knowledge" : "experience", createdAt: new Date().toISOString() });
+      bump("me", 1);
+      ui.askTitle = "";
+      ui.askBody = "";
+      save();
+      ui.stack = [{ screen: "home", qid: null, threadId: ui.threadId }];
+      ui.screen = "q";
+      ui.qid = id;
+      ui.error = "";
+      render();
+    }
+
+    function onAnswer(form) {
+      const body = form.body.value.trim();
+      const question = questionById(ui.qid);
+      if (!question) return;
+      if (body.length < 10) { ui.error = "Share a bit more than a few words."; render(); return; }
+      if (body.length > 4000) { ui.error = "That answer is too long."; render(); return; }
+      db.answers.push({ id: db.nextId++, questionId: question.id, userId: "me", authorName: displayName(), body, helpful: 0, isBest: false, createdAt: new Date().toISOString() });
+      bump("me", 2);
+      save();
+      ui.error = "";
+      render();
+    }
+
+    function onVote(answerId) {
+      const answer = db.answers.find((item) => item.id === answerId);
+      if (!answer) return;
+      if (answer.userId === "me") { ui.error = "You can't mark your own answer as helpful."; render(); return; }
+      if (db.votes.includes(answerId)) { ui.error = "You already marked this helpful."; render(); return; }
+      db.votes.push(answerId);
+      answer.helpful += 1;
+      bump(answer.userId, 1);
+      save();
+      ui.error = "";
+      render();
+    }
+
+    function onAccept(answerId) {
+      const answer = db.answers.find((item) => item.id === answerId);
+      const question = questionById(ui.qid);
+      if (!answer || !question) return;
+      if (question.userId !== "me") { ui.error = "Only the person who asked can accept an answer."; render(); return; }
+      if (answer.isBest) return;
+      const previous = db.answers.filter((item) => item.questionId === question.id && item.isBest);
+      previous.forEach((item) => {
+        item.isBest = false;
+        if (item.userId !== question.userId) bump(item.userId, -5);
+      });
+      answer.isBest = true;
+      if (answer.userId !== question.userId) bump(answer.userId, 5);
+      save();
+      ui.error = "";
+      render();
+    }
+
+    function onDelete(action) {
+      if (action === "ask") { ui.confirmDelete = true; render(); return; }
+      if (action === "no") { ui.confirmDelete = false; render(); return; }
+      const question = questionById(ui.qid);
+      if (!question || question.userId !== "me") { ui.error = "You can only delete your own question."; render(); return; }
+      db.questions = db.questions.filter((item) => item.id !== question.id);
+      db.answers = db.answers.filter((item) => item.questionId !== question.id);
+      save();
+      openTab("home");
+    }
+
+    function onLaya(form) {
+      const prompt = form.prompt.value.trim();
+      if (prompt.length < 2) { ui.error = "Ask Laya a real question."; render(); return; }
+      if (prompt.length > 2000) { ui.error = "That question is too long."; render(); return; }
+      let thread = db.threads.find((item) => item.id === ui.threadId);
+      if (!thread) {
+        thread = { id: db.nextId++, title: prompt.slice(0, 72), updatedAt: new Date().toISOString(), messages: [] };
+        db.threads.push(thread);
+        ui.threadId = thread.id;
+      }
+      thread.messages.push({ id: db.nextId++, role: "user", content: prompt });
+      thread.messages.push({ id: db.nextId++, role: "assistant", content: layaReply(prompt) });
+      thread.updatedAt = new Date().toISOString();
+      save();
+      ui.error = "";
+      render();
+    }
+
+    function onName(form) {
+      const name = form.name.value.replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 40);
+      if (name.length < 2) { ui.error = "Use at least 2 letters so people know who you are."; ui.notice = ""; render(); return; }
+      db.name = name;
+      db.questions.forEach((question) => { if (question.userId === "me") question.authorName = name; });
+      db.answers.forEach((answer) => { if (answer.userId === "me") answer.authorName = name; });
+      save();
+      ui.error = "";
+      ui.notice = "Name saved.";
+      render();
+    }
+
+    render();
+    setTimeout(() => {
+      if (ui.screen === "boot") openTab("home");
+    }, 700);
+  </script>
+</body>
+</html>

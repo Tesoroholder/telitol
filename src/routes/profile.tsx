@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { UserButton } from "@/lib/auth/gates";
 import { ErrorNote, PrimaryButton, TextField } from "@/components/fields";
-import { getProfile, updateProfile } from "@/lib/telitall/server";
-import { formatWhen, reputationLabel, type ProfileData } from "@/lib/telitall/shared";
+import { getProfile, updateProfile } from "@/lib/telitol/server";
+import { formatWhen, reputationLabel, type ProfileData } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/profile")({ component: ProfilePage });
 

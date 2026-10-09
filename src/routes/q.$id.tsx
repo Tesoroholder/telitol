@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { AreaField, ErrorNote, PrimaryButton, SecondaryButton } from "@/components/fields";
-import { acceptAnswer, createAnswer, deleteQuestion, getQuestion, voteHelpful } from "@/lib/telitall/server";
-import { categoryLabel, formatWhen, kindLabel, type AnswerCard, type QuestionCard } from "@/lib/telitall/shared";
+import { acceptAnswer, createAnswer, deleteQuestion, getQuestion, voteHelpful } from "@/lib/telitol/server";
+import { categoryLabel, formatWhen, kindLabel, type AnswerCard, type QuestionCard } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/q/$id")({ component: QuestionPage });
 

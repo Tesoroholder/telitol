@@ -11,7 +11,7 @@ import {
   type ProfileData,
   type QuestionCard,
   type QuestionKind,
-} from "@/lib/telitall/shared";
+} from "@/lib/telitol/shared";
 
 /**
  * Community posts are readable by any signed-in member. Identity on writes,
@@ -25,11 +25,11 @@ const CRISIS =
 const CRISIS_REPLY =
   "I'm glad you said this out loud. I'm not the right help for it, and you deserve a person right now. If you might hurt yourself, contact local emergency services. In India you can call iCall at 9152987821 or AASRA at 9820466726. If you can, tell someone who is near you.";
 
-const LAYA_SYSTEM = `You are Laya, the AI companion inside TeliTall, a community where people ask questions and share what they have lived.
+const LAYA_SYSTEM = `You are Laya, the AI companion inside TeliTol, a community where people ask questions and share what they have lived.
 
 How you answer:
 - Warm, plain, and specific. No corporate cheer, no therapy clichés, and no wall of bullets unless they asked for steps.
-- If they want a lived experience (heartbreak, a first job, moving cities), speak like a thoughtful friend who has listened to many people: what it often feels like, what tends to help, and what varies. Invite them to also ask people on TeliTall for real stories.
+- If they want a lived experience (heartbreak, a first job, moving cities), speak like a thoughtful friend who has listened to many people: what it often feels like, what tends to help, and what varies. Invite them to also ask people on TeliTol for real stories.
 - If the question is factual, be clear and correct. Teach the idea, not a lecture.
 - Separate what is generally true from what is only your take.
 - You are not a doctor, lawyer, or therapist. Say so in one sentence when the topic is health, money, or the law.

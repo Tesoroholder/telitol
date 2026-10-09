@@ -3,8 +3,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { AreaField, ErrorNote, PrimaryButton, TextField } from "@/components/fields";
 import { ModeSwitch } from "@/components/mode-switch";
-import { createQuestion } from "@/lib/telitall/server";
-import { CATEGORIES, type CategoryId, type QuestionKind } from "@/lib/telitall/shared";
+import { createQuestion } from "@/lib/telitol/server";
+import { CATEGORIES, type CategoryId, type QuestionKind } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/ask")({ component: AskPage });
 

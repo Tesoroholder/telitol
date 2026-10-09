@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { House, SquarePen, CircleUser } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { ensureProfileFn } from "@/lib/telitall/server";
+import { ensureProfileFn } from "@/lib/telitol/server";
 import { LogoMark, Wordmark } from "@/components/logo";
 
 function BootScreen() {

@@ -9,10 +9,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TeliTall" },
+      { title: "TeliTol" },
       {
         name: "description",
-        content: "Ask people about real life, or ask Laya. TeliTall is a community for questions and lived experience.",
+        content: "Ask people about real life, or ask Laya. TeliTol is a community for questions and lived experience.",
       },
       { name: "theme-color", content: "#0e9f6e" },
     ],

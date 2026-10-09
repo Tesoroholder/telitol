@@ -1,4 +1,4 @@
-# TeliTall technical plan
+# TeliTol technical plan
 
 The web app is a signed-in community with a database. It is not a static page and it is not a local-only demo.
 
@@ -8,9 +8,9 @@ The web app is a signed-in community with a database. It is not a static page an
 - Tailwind CSS v4, design tokens in `src/styles.css`
 - Postgres in production, via the app's SQL helper in `src/lib/db.ts`
 - Better Auth session, already wired by the platform
-- Server functions in `src/lib/telitall/server.ts`
-- Shared types, categories, and labels in `src/lib/telitall/shared.ts`
-- Schema and seed posts in `migrations/0002_telitall.sql`
+- Server functions in `src/lib/telitol/server.ts`
+- Shared types, categories, and labels in `src/lib/telitol/shared.ts`
+- Schema and seed posts in `migrations/0002_telitol.sql`
 
 Routes:
 
@@ -111,10 +111,10 @@ src/components/frame.tsx
 src/components/logo.tsx
 src/components/fields.tsx
 src/components/mode-switch.tsx
-src/lib/telitall/server.ts
-src/lib/telitall/shared.ts
+src/lib/telitol/server.ts
+src/lib/telitol/shared.ts
 src/styles.css
-migrations/0002_telitall.sql
+migrations/0002_telitol.sql
 ```
 
-Platform auth, database, and PWA helpers under `src/lib/auth`, `src/lib/db.ts`, `scripts/`, and `server/` stay in the archive because the app does not boot without them. They are not TeliTall-specific product logic.
+Platform auth, database, and PWA helpers under `src/lib/auth`, `src/lib/db.ts`, `scripts/`, and `server/` stay in the archive because the app does not boot without them. They are not TeliTol-specific product logic.

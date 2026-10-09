@@ -1,11 +1,11 @@
-# TeliTall product plan
+# TeliTol product plan
 
-**Name:** TeliTall  
+**Name:** TeliTol  
 **Wordmark:** TELI in blue, TALL in green  
 **Line:** Ask a person, or ask Laya.  
 **Footer promise:** Ask · Learn · Share · Grow
 
-TeliTall is a community for questions that are better answered by a person who has lived them, with a second door for people who want a clear reply right now.
+TeliTol is a community for questions that are better answered by a person who has lived them, with a second door for people who want a clear reply right now.
 
 ## Who it is for
 
@@ -17,7 +17,7 @@ A second reader wants the idea, not the story: why complete the square, how a th
 
 Advice products flatten lived experience into tips, or they hide the person behind an anonymous pile of comments. Search gives a paragraph. Forums give a thread that never ends. Neither says, plainly, whether you are hearing a story or an explanation.
 
-TeliTall keeps that distinction on the question itself.
+TeliTol keeps that distinction on the question itself.
 
 ## Two ways to ask
 
@@ -70,7 +70,7 @@ Copy is short, specific, and adult. No corporate cheer, no therapy clichés, no 
 Laya's rules:
 
 - Warm, plain, specific. Steps only if they asked for steps.
-- For a lived experience, speak like a thoughtful friend who has listened to many people: what it often feels like, what tends to help, what varies. Invite them to ask people on TeliTall for real stories.
+- For a lived experience, speak like a thoughtful friend who has listened to many people: what it often feels like, what tends to help, what varies. Invite them to ask people on TeliTol for real stories.
 - For a fact, teach the idea.
 - Separate what is generally true from what is only a take.
 - Stay under about 180 words unless they ask for more.

@@ -1,4 +1,4 @@
-package app.telitall;
+package app.telitol;
 
 import android.app.Activity;
 import android.os.Build;
@@ -41,7 +41,7 @@ public class MainActivity extends Activity {
             super.onBackPressed();
             return;
         }
-        web.evaluateJavascript("window.telitallBack && window.telitallBack()", value -> {
+        web.evaluateJavascript("window.telitolBack && window.telitolBack()", value -> {
             if ("\"exit\"".equals(value) || "null".equals(value)) {
                 finish();
             }

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ErrorNote, PrimaryButton } from "@/components/fields";
 import { ModeSwitch } from "@/components/mode-switch";
-import { askLaya, getLayaThread, listLayaThreads } from "@/lib/telitall/server";
-import type { LayaMessage, LayaThread } from "@/lib/telitall/shared";
+import { askLaya, getLayaThread, listLayaThreads } from "@/lib/telitol/server";
+import type { LayaMessage, LayaThread } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/laya")({ component: LayaPage });
 

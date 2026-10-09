@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { listQuestions } from "@/lib/telitall/server";
-import { CATEGORIES, categoryLabel, formatWhen, kindLabel, type QuestionCard } from "@/lib/telitall/shared";
+import { listQuestions } from "@/lib/telitol/server";
+import { CATEGORIES, categoryLabel, formatWhen, kindLabel, type QuestionCard } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/")({ component: HomePage });
 

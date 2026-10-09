@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
-  <title>TeliTall</title>
+  <title>TeliTol</title>
   <style>
     :root {
       --paper: #f4f7f5;
@@ -99,7 +99,7 @@
       ["other", "Other"]
     ];
     const CAT_LABEL = Object.fromEntries(CATS);
-    const KEY = "telitall.phone.v1";
+    const KEY = "telitol.phone.v1";
     const CRISIS = /\b(suicid|kill myself|killing myself|self[-\s]?harm|end my life|want to die|do not want to live|don't want to live)\b/i;
     const CRISIS_REPLY = "I'm glad you said this out loud. I'm not the right help for it, and you deserve a person right now. If you might hurt yourself, contact local emergency services. In India you can call iCall at 9152987821 or AASRA at 9820466726. If you can, tell someone who is near you.";
 
@@ -217,9 +217,9 @@
           : "";
       let body;
       if (/\b(heartbreak|broke up|breakup|ex)\b/.test(text)) {
-        body = "The first weeks are often less like sadness and more like a reflex: checking, rehearsing, waiting for the story to reverse. What tends to help is not a better explanation. It is one person who hears the unpretty version, and one small edge to the day, like a walk at the same hour. It usually gets quieter before it feels fine. If you want the real version from someone who lived it, ask it on TeliTall.";
+        body = "The first weeks are often less like sadness and more like a reflex: checking, rehearsing, waiting for the story to reverse. What tends to help is not a better explanation. It is one person who hears the unpretty version, and one small edge to the day, like a walk at the same hour. It usually gets quieter before it feels fine. If you want the real version from someone who lived it, ask it on TeliTol.";
       } else if (/\b(interview|job|resume|hire)\b/.test(text)) {
-        body = "Interviewers rarely need a long career. They need to see how you think when something is messy. A useful shape is situation, what you did, what changed. A shop job, a campus project, or a rude customer you handled calmly counts. Practice out loud until you stop apologizing for being new. People on TeliTall can tell you the sentence they actually used.";
+        body = "Interviewers rarely need a long career. They need to see how you think when something is messy. A useful shape is situation, what you did, what changed. A shop job, a campus project, or a rude customer you handled calmly counts. Practice out loud until you stop apologizing for being new. People on TeliTol can tell you the sentence they actually used.";
       } else if (/\b(move|city|alone|lonely|loneliness)\b/.test(text)) {
         body = "The surprise is usually not the new streets. It is how loud 9pm is when nobody knows your name. A tiny repeated place, a tea stall, a walk, a desk, often steadies you before friendship does. Friendship comes later, and it comes faster if the day already has an edge. Ask people who moved alone. Their first month will not match a travel list.";
       } else if (/\b(study|focus|procrast|exam|homework)\b/.test(text)) {
@@ -230,7 +230,7 @@
         body = "A lot of people come out of a hard season tired and awake at the same time. What often changes it is a boring wind-down kept even when it feels pointless: light down, phone out of reach, something dull to read. It can take a couple of weeks before the body believes the night is over. If sleep is badly broken, a person who treats that is the right next step, not me.";
       } else {
         const clip = prompt.trim().replace(/\s+/g, " ").slice(0, 140);
-        body = "You asked: “" + clip + "”. What is generally true is that a useful answer separates the pattern from the exception. My take is to name the smallest next step you could actually do this week, and to notice what you are hoping someone will reassure you about. I have not lived your exact story. Post it for a person on TeliTall if you want the version that happened to someone.";
+        body = "You asked: “" + clip + "”. What is generally true is that a useful answer separates the pattern from the exception. My take is to name the smallest next step you could actually do this week, and to notice what you are hoping someone will reassure you about. I have not lived your exact story. Post it for a person on TeliTol if you want the version that happened to someone.";
       }
       return (caution + body).slice(0, 1200);
     }
@@ -249,7 +249,7 @@
       Object.assign(ui, partial, { error: "", notice: "", confirmDelete: false });
       render();
     }
-    window.telitallBack = function () {
+    window.telitolBack = function () {
       const prev = ui.stack.pop();
       if (!prev) return "exit";
       ui.screen = prev.screen;

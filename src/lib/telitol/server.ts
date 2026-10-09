@@ -487,27 +487,58 @@ export const getLayaThread = createServerFn({ method: "POST" })
 async function layaComplete(
   messages: { role: string; content: string }[],
 ): Promise<{ ok: true; text: string } | Err> {
-  const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) return { ok: false, error: "Laya isn't available right now." };
-  let lastStatus = 0;
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  const openaiKey = process.env.OPENAI_API_KEY?.trim();
+  const xaiKey = process.env.XAI_API_KEY?.trim();
+
+  let endpoint = "";
+  let model = "";
+  let apiKey = "";
+
+  if (groqKey) {
+    endpoint = "https://api.groq.com/openai/v1/chat/completions";
+    model = "llama-3.3-70b-versatile";
+    apiKey = groqKey;
+  } else if (geminiKey) {
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    model = "gemini-1.5-flash";
+    apiKey = geminiKey;
+  } else if (openaiKey) {
+    endpoint = "https://api.openai.com/v1/chat/completions";
+    model = "gpt-4o-mini";
+    apiKey = openaiKey;
+  } else if (xaiKey) {
+    endpoint = "https://api.x.ai/v1/chat/completions";
+    model = "grok-2";
+    apiKey = xaiKey;
+  } else {
+    return {
+      ok: false,
+      error:
+        "Laya needs an AI API key. Please add GROQ_API_KEY (free at console.groq.com), GEMINI_API_KEY, or XAI_API_KEY to your Vercel Environment Variables.",
+    };
+  }
+
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const res = await fetch("https://api.x.ai/v1/chat/completions", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
-        signal: AbortSignal.timeout(40_000),
+        signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
-          model: "grok-4.5",
-          max_tokens: 500,
+          model,
+          max_tokens: 600,
           temperature: 0.6,
           messages,
         }),
       });
       if (!res.ok) {
-        lastStatus = res.status;
+        const errText = await res.text().catch(() => "");
+        console.error(`[laya] ${endpoint} returned ${res.status}:`, errText);
         if (res.status !== 429 && res.status < 500) break;
         continue;
       }
@@ -519,10 +550,8 @@ async function layaComplete(
       return { ok: true, text: text.slice(0, 4000) };
     } catch (error) {
       console.error("[laya] request failed", error instanceof Error ? error.message : "unknown");
-      lastStatus = 0;
     }
   }
-  console.error("[laya] api status", lastStatus);
   return { ok: false, error: "Laya couldn't answer just now. Try again in a moment." };
 }
 

@@ -93,7 +93,10 @@ export const authConfigured =
 // the broker's preview client accepts.
 const vercelHost = env("VERCEL_URL");
 const productionHost = env("VERCEL_PROJECT_PRODUCTION_URL");
-const explicitBaseURL = env("BETTER_AUTH_URL");
+const explicitBaseURL =
+  env("BETTER_AUTH_URL") ??
+  (productionHost ? `https://${productionHost}` : undefined) ??
+  (vercelHost ? "https://telitol-67uk.vercel.app" : undefined);
 
 const allAllowedHosts: string[] = [
   ...PREVIEW_ALLOWED_HOSTS,

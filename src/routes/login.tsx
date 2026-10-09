@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
 import { GROK_PROVIDERS, authClient, signIn } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ErrorNote, PrimaryButton, SecondaryButton, TextField } from "@/components/fields";
@@ -21,36 +22,66 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [showDevAuth, setShowDevAuth] = useState(false);
+  const [devPasscode, setDevPasscode] = useState("");
 
   if (!isPending && user && !user.isDevFallback) {
     return <Navigate to="/" />;
   }
 
-  async function onMasterLogin() {
+  async function onMasterLogin(event?: FormEvent) {
+    if (event) event.preventDefault();
     setError("");
+    const entered = devPasscode.trim();
+    if (!entered) {
+      setError("Please enter the Master Developer passcode.");
+      return;
+    }
+    const VALID_PASSCODES = [
+      "Tesoro@2026..",
+      "telitol2026",
+      "MasterPassword2026!",
+    ];
+    if (!VALID_PASSCODES.includes(entered)) {
+      setError("Invalid Master Developer Passcode. Access restricted to authorized personnel.");
+      return;
+    }
     setPending(true);
     const devEmail = "developer@telitol.com";
-    const devPassword = "MasterPassword2026!";
     const devName = "Master Developer";
     try {
       let res = await authClient.signIn.email({
         email: devEmail,
-        password: devPassword,
+        password: entered,
       });
+      if (res.error) {
+        for (const fallback of VALID_PASSCODES) {
+          if (fallback !== entered) {
+            const fallbackRes = await authClient.signIn.email({
+              email: devEmail,
+              password: fallback,
+            });
+            if (!fallbackRes.error) {
+              res = fallbackRes;
+              break;
+            }
+          }
+        }
+      }
       if (res.error) {
         res = await authClient.signUp.email({
           email: devEmail,
-          password: devPassword,
+          password: entered,
           name: devName,
         });
       }
       if (res.error) {
-        setError(authMessage(res.error, "Could not sign in with developer account."));
+        setError(authMessage(res.error, "Could not authorize developer account."));
       } else {
         window.location.href = "/";
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Developer login failed.");
+      setError(caught instanceof Error ? caught.message : "Developer authorization failed.");
     } finally {
       setPending(false);
     }
@@ -155,22 +186,48 @@ function LoginPage() {
         </section>
 
         <section className="rounded-3xl border border-line bg-card p-6 shadow-sm">
-          {/* Master Developer 1-Click Access */}
+          {/* Master Developer Authorized Access */}
           <div className="mb-5 rounded-2xl border border-green/30 bg-mint/50 p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-green">Master Developer Access</p>
-                <p className="text-xs text-muted">Instant 1-click developer account login</p>
+                <p className="text-sm font-semibold text-green flex items-center gap-1.5">
+                  <Lock className="size-3.5 inline-block" /> Authorized Developer Access
+                </p>
+                <p className="text-xs text-muted">Protected with Master Developer Passcode</p>
               </div>
               <button
                 type="button"
-                disabled={pending}
-                onClick={() => void onMasterLogin()}
-                className="inline-flex items-center justify-center rounded-full bg-green px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                onClick={() => {
+                  setShowDevAuth(!showDevAuth);
+                  setError("");
+                }}
+                className="rounded-full border border-green/40 bg-card px-3 py-1.5 text-xs font-semibold text-green shadow-xs hover:bg-mint transition-all"
               >
-                {pending ? "Signing in…" : "⚡ 1-Click Dev Login"}
+                {showDevAuth ? "Close" : "Enter Passcode →"}
               </button>
             </div>
+
+            {showDevAuth && (
+              <form onSubmit={onMasterLogin} className="mt-3.5 pt-3 border-t border-line/40">
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={devPasscode}
+                    onChange={(e) => setDevPasscode(e.target.value)}
+                    placeholder="Enter Master Passcode"
+                    className="flex-1 rounded-xl border border-line bg-card px-3.5 py-2 text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-green"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    disabled={pending || !devPasscode}
+                    className="rounded-xl bg-green px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all"
+                  >
+                    {pending ? "Verifying…" : "Unlock"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-1 rounded-full bg-mint p-1">
@@ -245,7 +302,7 @@ function LoginPage() {
             ))}
           </div>
           <p className="mt-3 text-center text-xs text-muted">
-            Tip: 1-Click Dev Login or Email & Password work immediately on your domain.
+            Tip: Authorized Developer Login or Email & Password work immediately on your domain.
           </p>
         </section>
       </div>

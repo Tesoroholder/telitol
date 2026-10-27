@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { UserButton } from "@/lib/auth/gates";
+import { UserButton } from "@/components/user-button";
 import { ErrorNote, PrimaryButton, TextField } from "@/components/fields";
 import { getProfile, updateProfile } from "@/lib/telitol/server";
 import { formatWhen, reputationLabel, type ProfileData } from "@/lib/telitol/shared";

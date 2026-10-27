@@ -1,4 +1,9 @@
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import {
+  useId,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from "react";
 
 const fieldClass =
   "w-full rounded-lg border border-line bg-card px-3 text-base text-ink outline-none placeholder:text-muted focus-visible:border-green";
@@ -28,7 +33,11 @@ export function AreaField({
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink">
         {label}
       </label>
-      <textarea id={id} className={`${fieldClass} min-h-32 resize-y py-3`} {...props} />
+      <textarea
+        id={id}
+        className={`${fieldClass} min-h-32 resize-y py-3`}
+        {...props}
+      />
     </div>
   );
 }

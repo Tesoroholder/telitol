@@ -46,6 +46,7 @@ export interface Sql {
  */
 const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
+  __pgPool__?: import("pg").Pool;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
 };
@@ -77,11 +78,14 @@ function toSql(run: Run): Sql {
   ): Promise<T[]> => {
     // Rebuild with $1, $2, … placeholders so values stay parameterized.
     let text = strings[0];
-    for (let i = 0; i < values.length; i += 1) text += `$${i + 1}${strings[i + 1]}`;
+    for (let i = 0; i < values.length; i += 1)
+      text += `$${i + 1}${strings[i + 1]}`;
     return run<T>(text, values);
   }) as unknown as Sql;
-  sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
-    run<T>(text, params);
+  sql.query = <T = Record<string, unknown>>(
+    text: string,
+    params: unknown[] = [],
+  ) => run<T>(text, params);
   return sql;
 }
 
@@ -94,6 +98,7 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({ connectionString: databaseUrl });
+    globalRef.__pgPool__ = pool;
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
@@ -146,7 +151,10 @@ async function createPgliteSql(): Promise<Sql> {
       "select name from _migrations",
     );
     const done = doneRows.rows.map((r) => r.name);
-    for (const { name, path } of pendingMigrations(Object.keys(migrations), done)) {
+    for (const { name, path } of pendingMigrations(
+      Object.keys(migrations),
+      done,
+    )) {
       // Apply + record atomically (parity with scripts/migrate.mjs) so a failed
       // statement can't leave a file half-applied but untracked.
       await pg.transaction(async (tx) => {
@@ -195,13 +203,63 @@ export function getSql(): Promise<Sql> {
 }
 
 /**
+ * Run `fn` inside one database transaction. Everything `fn` does through the
+ * `tx` it receives commits together or rolls back together.
+ *
+ *   await withTransaction(async (tx) => {
+ *     await tx`update answers set is_best = false where question_id = ${id}`;
+ *     await tx`update answers set is_best = true where id = ${answerId}`;
+ *   });
+ */
+export async function withTransaction<T>(
+  fn: (tx: Sql) => Promise<T>,
+): Promise<T> {
+  await getSql();
+  if (dbSource === "pglite") {
+    const pg = await globalRef.__pgliteInstance__;
+    if (!pg) throw new Error("PGLite instance failed to initialize");
+    return pg.transaction((tx) =>
+      fn(
+        toSql(
+          async <R>(text: string, params: unknown[]) =>
+            (await tx.query<R>(text, params)).rows,
+        ),
+      ),
+    );
+  }
+  const pool = globalRef.__pgPool__;
+  if (!pool) throw new Error("Postgres pool failed to initialize");
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const result = await fn(
+      toSql(
+        async <R>(text: string, params: unknown[]) =>
+          (await client.query(text, params)).rows as R[],
+      ),
+    );
+    await client.query("commit");
+    return result;
+  } catch (err) {
+    await client.query("rollback").catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * The shared PGLite instance (preview only), with `migrations/*.sql` applied.
  * Lets Better Auth persist to the SAME embedded DB as app data in preview (via a
  * Kysely dialect). Throws when `DATABASE_URL` is set (that path uses Neon).
  */
-export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite> {
+export async function getPglite(): Promise<
+  import("@electric-sql/pglite").PGlite
+> {
   if (dbSource !== "pglite") {
-    throw new Error("getPglite() is only available on the PGLite fallback (no DATABASE_URL)");
+    throw new Error(
+      "getPglite() is only available on the PGLite fallback (no DATABASE_URL)",
+    );
   }
   await getSql();
   const pg = await globalRef.__pgliteInstance__;

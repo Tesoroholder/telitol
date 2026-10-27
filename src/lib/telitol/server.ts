@@ -20,6 +20,7 @@ import {
   QUESTION_SELECT,
   type QuestionRow,
 } from "@/lib/telitol/questions";
+import { suspensionMessage } from "@/lib/telitol/moderation";
 import { allowAction, SLOW_DOWN } from "@/lib/telitol/rate-limit";
 
 /**
@@ -327,6 +328,8 @@ export const createQuestion = createServerFn({ method: "POST" })
         return { ok: false, error: "Choose experience or knowledge." };
       }
       const sql = await getSql();
+      const suspended = await suspensionMessage(sql, context.userId);
+      if (suspended) return { ok: false, error: suspended };
       if (!(await allowAction(sql, "question", context.userId)))
         return { ok: false, error: SLOW_DOWN };
       const profile = await ensureProfile(
@@ -371,6 +374,8 @@ export const createAnswer = createServerFn({ method: "POST" })
       if (data.body.length > 4000)
         return { ok: false, error: "That answer is too long." };
       const sql = await getSql();
+      const suspended = await suspensionMessage(sql, context.userId);
+      if (suspended) return { ok: false, error: suspended };
       if (!(await allowAction(sql, "answer", context.userId)))
         return { ok: false, error: SLOW_DOWN };
       const found = await sql<{

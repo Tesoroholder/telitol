@@ -1,9 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
-import { AreaField, ErrorNote, PrimaryButton, SecondaryButton } from "@/components/fields";
-import { acceptAnswer, createAnswer, deleteQuestion, getQuestion, voteHelpful } from "@/lib/telitol/server";
-import { categoryLabel, formatWhen, kindLabel, type AnswerCard, type QuestionCard } from "@/lib/telitol/shared";
+import {
+  AreaField,
+  ErrorNote,
+  PrimaryButton,
+  SecondaryButton,
+} from "@/components/fields";
+import {
+  acceptAnswer,
+  createAnswer,
+  deleteQuestion,
+  getQuestion,
+  voteHelpful,
+} from "@/lib/telitol/server";
+import { reportContent } from "@/lib/telitol/moderation-server";
+import { ReportButton } from "@/components/report-button";
+import {
+  categoryLabel,
+  formatWhen,
+  kindLabel,
+  type AnswerCard,
+  type QuestionCard,
+} from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/q/$id")({ component: QuestionPage });
 
@@ -85,7 +104,9 @@ function QuestionPage() {
     }
     setAnswers((current) =>
       current.map((answer) =>
-        answer.id === answerId ? { ...answer, voted: true, helpful: result.helpful } : answer,
+        answer.id === answerId
+          ? { ...answer, voted: true, helpful: result.helpful }
+          : answer,
       ),
     );
   }
@@ -94,10 +115,14 @@ function QuestionPage() {
     setError("");
     const result = await acceptAnswer({ data: { answerId } }).catch(() => null);
     if (!result || !result.ok) {
-      setError(result && !result.ok ? result.error : "Couldn't accept that answer.");
+      setError(
+        result && !result.ok ? result.error : "Couldn't accept that answer.",
+      );
       return;
     }
-    setAnswers((current) => current.map((answer) => ({ ...answer, isBest: answer.id === answerId })));
+    setAnswers((current) =>
+      current.map((answer) => ({ ...answer, isBest: answer.id === answerId })),
+    );
   }
 
   async function onDelete() {
@@ -117,18 +142,28 @@ function QuestionPage() {
     }
   }
 
-  if (error && !question && !missing) return <p className="text-sm font-medium">{error}</p>;
+  if (error && !question && !missing)
+    return <p className="text-sm font-medium">{error}</p>;
   if (missing) {
     return (
       <div className="rounded-3xl border border-line bg-card p-4">
         <p className="font-semibold">This question isn't here.</p>
-        <Link to="/" className="mt-3 inline-flex text-sm font-semibold text-green">
+        <Link
+          to="/"
+          className="mt-3 inline-flex text-sm font-semibold text-green"
+        >
           Back home
         </Link>
       </div>
     );
   }
-  if (!question) return <div className="h-48 animate-pulse rounded-3xl bg-mint" aria-hidden="true" />;
+  if (!question)
+    return (
+      <div
+        className="h-48 animate-pulse rounded-3xl bg-mint"
+        aria-hidden="true"
+      />
+    );
 
   return (
     <div className="space-y-5">
@@ -137,32 +172,68 @@ function QuestionPage() {
       </Link>
       <article className="space-y-3">
         <p className="text-sm text-muted">
-          <span className={question.kind === "experience" ? "font-medium text-green" : "font-medium text-blue"}>
+          <span
+            className={
+              question.kind === "experience"
+                ? "font-medium text-green"
+                : "font-medium text-blue"
+            }
+          >
             {kindLabel(question.kind)}
           </span>
           <span> · {categoryLabel(question.category)}</span>
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">{question.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {question.title}
+        </h1>
         <p className="whitespace-pre-wrap text-base">{question.body}</p>
         <p className="text-sm text-muted">
           <span className="font-medium text-ink">{question.authorName}</span>
-          {question.reputation > 0 ? <span className="tabular-nums"> · {question.reputation} pts</span> : null}
+          {question.reputation > 0 ? (
+            <span className="tabular-nums"> · {question.reputation} pts</span>
+          ) : null}
           <span> · {formatWhen(question.createdAt)}</span>
         </p>
         {question.category === "health" ? (
-          <p className="text-sm text-muted">Personal experiences only — not medical advice.</p>
+          <p className="text-sm text-muted">
+            Personal experiences only — not medical advice.
+          </p>
+        ) : null}
+        {!question.isMine ? (
+          <ReportButton
+            label="Report question"
+            onReport={(reason, details) =>
+              reportContent({
+                data: {
+                  targetType: "question",
+                  targetId: question.id,
+                  reason,
+                  details,
+                },
+              })
+            }
+          />
         ) : null}
         {question.isMine ? (
           <div>
             {confirmDelete ? (
               <div className="flex gap-2">
-                <SecondaryButton onClick={() => void onDelete()} disabled={pending}>
+                <SecondaryButton
+                  onClick={() => void onDelete()}
+                  disabled={pending}
+                >
                   Confirm delete
                 </SecondaryButton>
-                <SecondaryButton onClick={() => setConfirmDelete(false)}>Keep it</SecondaryButton>
+                <SecondaryButton onClick={() => setConfirmDelete(false)}>
+                  Keep it
+                </SecondaryButton>
               </div>
             ) : (
-              <button type="button" className="text-sm font-medium text-muted" onClick={() => setConfirmDelete(true)}>
+              <button
+                type="button"
+                className="text-sm font-medium text-muted"
+                onClick={() => setConfirmDelete(true)}
+              >
                 Delete question
               </button>
             )}
@@ -175,7 +246,9 @@ function QuestionPage() {
           {answers.length} {answers.length === 1 ? "answer" : "answers"}
         </h2>
         {answers.length === 0 ? (
-          <p className="text-sm text-muted">No answers yet. If you've lived this, say so.</p>
+          <p className="text-sm text-muted">
+            No answers yet. If you've lived this, say so.
+          </p>
         ) : null}
         <ul className="space-y-3">
           {answers.map((answer) => (
@@ -186,11 +259,20 @@ function QuestionPage() {
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm">
                   <span className="font-semibold">{answer.authorName}</span>
-                  <span className="text-muted"> · {formatWhen(answer.createdAt)}</span>
+                  <span className="text-muted">
+                    {" "}
+                    · {formatWhen(answer.createdAt)}
+                  </span>
                 </p>
-                {answer.isBest ? <span className="text-xs font-semibold text-green">Best answer</span> : null}
+                {answer.isBest ? (
+                  <span className="text-xs font-semibold text-green">
+                    Best answer
+                  </span>
+                ) : null}
               </div>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">{answer.body}</p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
+                {answer.body}
+              </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {answer.isMine ? (
                   <span className="text-sm text-muted">Your answer</span>
@@ -200,13 +282,31 @@ function QuestionPage() {
                     disabled={answer.voted}
                     onClick={() => void onVote(answer.id)}
                   >
-                    {answer.voted ? "Marked helpful" : "Helpful"} · <span className="tabular-nums">{answer.helpful}</span>
+                    {answer.voted ? "Marked helpful" : "Helpful"} ·{" "}
+                    <span className="tabular-nums">{answer.helpful}</span>
                   </SecondaryButton>
                 )}
                 {question.isMine && !answer.isBest ? (
-                  <SecondaryButton className="h-10 px-4 text-sm" onClick={() => void onAccept(answer.id)}>
+                  <SecondaryButton
+                    className="h-10 px-4 text-sm"
+                    onClick={() => void onAccept(answer.id)}
+                  >
                     Accept
                   </SecondaryButton>
+                ) : null}
+                {!answer.isMine ? (
+                  <ReportButton
+                    onReport={(reason, details) =>
+                      reportContent({
+                        data: {
+                          targetType: "answer",
+                          targetId: answer.id,
+                          reason,
+                          details,
+                        },
+                      })
+                    }
+                  />
                 ) : null}
               </div>
             </li>

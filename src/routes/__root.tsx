@@ -10,7 +10,8 @@ export const Route = createRootRoute({
       { title: "TeliTol" },
       {
         name: "description",
-        content: "Ask people about real life, or ask AI. TeliTol is a community for questions and lived experience.",
+        content:
+          "Ask people about real life, or ask AI. TeliTol is a community for questions and lived experience.",
       },
       { name: "theme-color", content: "#0e9f6e" },
       { property: "og:title", content: "TeliTol" },
@@ -19,7 +20,11 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap",

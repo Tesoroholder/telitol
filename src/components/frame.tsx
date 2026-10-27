@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
-import { House, SquarePen, CircleUser } from "lucide-react";
+import { House, SquarePen, CircleUser, MessagesSquare } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ensureProfileFn } from "@/lib/telitol/server";
 import { LogoMark, Wordmark } from "@/components/logo";
@@ -25,7 +25,7 @@ function NavItem({
   active,
   children,
 }: {
-  to: "/" | "/ask" | "/ai" | "/profile";
+  to: "/" | "/ask" | "/ai" | "/connect" | "/profile";
   label: string;
   active: boolean;
   children: ReactNode;
@@ -71,6 +71,7 @@ function Shell({ children }: { children: ReactNode }) {
   const home = path === "/" || path.startsWith("/q/");
   const ask = path.startsWith("/ask");
   const ai = path.startsWith("/ai");
+  const connect = path.startsWith("/connect");
   const you = path.startsWith("/profile");
 
   useEffect(() => {
@@ -103,6 +104,9 @@ function Shell({ children }: { children: ReactNode }) {
           </NavItem>
           <NavItem to="/ai" label="AI" active={ai}>
             <AiIcon active={ai} />
+          </NavItem>
+          <NavItem to="/connect" label="Connect" active={connect}>
+            <MessagesSquare className="size-6" strokeWidth={1.75} />
           </NavItem>
           <NavItem to="/profile" label="You" active={you}>
             <CircleUser className="size-6" strokeWidth={1.75} />

@@ -10,9 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AiRouteImport } from './routes/ai'
 import { Route as AskRouteImport } from './routes/ask'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as LayaRouteImport } from './routes/laya'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ModRouteImport } from './routes/mod'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as QIdRouteImport } from './routes/q.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -22,9 +25,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiRoute = AiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AskRoute = AskRouteImport.update({
   id: '/ask',
   path: '/ask',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayaRoute = LayaRouteImport.update({
@@ -35,6 +48,11 @@ const LayaRoute = LayaRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModRoute = ModRouteImport.update({
+  id: '/mod',
+  path: '/mod',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -55,18 +73,24 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
   '/ask': typeof AskRoute
+  '/connect': typeof ConnectRoute
   '/laya': typeof LayaRoute
   '/login': typeof LoginRoute
+  '/mod': typeof ModRoute
   '/profile': typeof ProfileRoute
   '/q/$id': typeof QIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
   '/ask': typeof AskRoute
+  '/connect': typeof ConnectRoute
   '/laya': typeof LayaRoute
   '/login': typeof LoginRoute
+  '/mod': typeof ModRoute
   '/profile': typeof ProfileRoute
   '/q/$id': typeof QIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -74,9 +98,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ai': typeof AiRoute
   '/ask': typeof AskRoute
+  '/connect': typeof ConnectRoute
   '/laya': typeof LayaRoute
   '/login': typeof LoginRoute
+  '/mod': typeof ModRoute
   '/profile': typeof ProfileRoute
   '/q/$id': typeof QIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -84,15 +111,37 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/ask' | '/laya' | '/login' | '/profile' | '/q/$id' | '/api/auth/$'
+    | '/'
+    | '/ai'
+    | '/ask'
+    | '/connect'
+    | '/laya'
+    | '/login'
+    | '/mod'
+    | '/profile'
+    | '/q/$id'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ask' | '/laya' | '/login' | '/profile' | '/q/$id' | '/api/auth/$'
+  to:
+    | '/'
+    | '/ai'
+    | '/ask'
+    | '/connect'
+    | '/laya'
+    | '/login'
+    | '/mod'
+    | '/profile'
+    | '/q/$id'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/'
+    | '/ai'
     | '/ask'
+    | '/connect'
     | '/laya'
     | '/login'
+    | '/mod'
     | '/profile'
     | '/q/$id'
     | '/api/auth/$'
@@ -100,9 +149,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AiRoute: typeof AiRoute
   AskRoute: typeof AskRoute
+  ConnectRoute: typeof ConnectRoute
   LayaRoute: typeof LayaRoute
   LoginRoute: typeof LoginRoute
+  ModRoute: typeof ModRoute
   ProfileRoute: typeof ProfileRoute
   QIdRoute: typeof QIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -117,11 +169,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai': {
+      id: '/ai'
+      path: '/ai'
+      fullPath: '/ai'
+      preLoaderRoute: typeof AiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ask': {
       id: '/ask'
       path: '/ask'
       fullPath: '/ask'
       preLoaderRoute: typeof AskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/laya': {
@@ -136,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mod': {
+      id: '/mod'
+      path: '/mod'
+      fullPath: '/mod'
+      preLoaderRoute: typeof ModRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -164,9 +237,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AiRoute: AiRoute,
   AskRoute: AskRoute,
+  ConnectRoute: ConnectRoute,
   LayaRoute: LayaRoute,
   LoginRoute: LoginRoute,
+  ModRoute: ModRoute,
   ProfileRoute: ProfileRoute,
   QIdRoute: QIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

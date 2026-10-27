@@ -1,0 +1,13 @@
+{
+  "name": "TeliTol",
+  "short_name": "TeliTol",
+  "description": "Ask a person, or ask AI.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0e9f6e",
+  "icons": [
+    { "src": "/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

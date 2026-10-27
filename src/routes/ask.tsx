@@ -1,10 +1,19 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
-import { AreaField, ErrorNote, PrimaryButton, TextField } from "@/components/fields";
+import {
+  AreaField,
+  ErrorNote,
+  PrimaryButton,
+  TextField,
+} from "@/components/fields";
 import { ModeSwitch } from "@/components/mode-switch";
 import { createQuestion } from "@/lib/telitol/server";
-import { CATEGORIES, type CategoryId, type QuestionKind } from "@/lib/telitol/shared";
+import {
+  CATEGORIES,
+  type CategoryId,
+  type QuestionKind,
+} from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/ask")({ component: AskPage });
 
@@ -49,7 +58,8 @@ function AskPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Ask a person</h1>
         <p className="mt-2 text-sm text-muted">
-          Experience questions want a story. Knowledge questions want a clear explanation.
+          Experience questions want a story. Knowledge questions want a clear
+          explanation.
         </p>
       </div>
       <ModeSwitch mode="human" />
@@ -82,7 +92,9 @@ function AskPage() {
                   aria-pressed={selected}
                   onClick={() => setCategory(item.id)}
                   className={`h-10 rounded-full px-3 text-sm font-medium ${
-                    selected ? "bg-ink text-on-ink" : "border border-line bg-card text-ink"
+                    selected
+                      ? "bg-ink text-on-ink"
+                      : "border border-line bg-card text-ink"
                   }`}
                 >
                   {item.label}
@@ -113,7 +125,9 @@ function AskPage() {
               : "What you're stuck on, and what you've already tried."
           }
         />
-        <p className="text-sm text-muted tabular-nums">{title.trim().length}/140</p>
+        <p className="text-sm text-muted tabular-nums">
+          {title.trim().length}/140
+        </p>
         <ErrorNote message={error} />
         <PrimaryButton type="submit" className="w-full" disabled={pending}>
           {pending ? "Posting…" : "Post question"}

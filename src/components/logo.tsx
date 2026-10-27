@@ -11,7 +11,12 @@ export function LogoMark({ className = "size-9" }: { className?: string }) {
         d="M34 48c1.6-10 8.4-16 16.5-16 5.4 0 10 2.6 12.5 7.2-6.6 1.2-12.2 4.6-16.2 9.6L34 48Z"
         className="fill-green"
       />
-      <path d="M40 8.5v6M48.5 11.2l-3.2 4.2M31.5 11.2l3.2 4.2" className="stroke-green" strokeWidth="2.4" strokeLinecap="round" />
+      <path
+        d="M40 8.5v6M48.5 11.2l-3.2 4.2M31.5 11.2l3.2 4.2"
+        className="stroke-green"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
       <path
         d="M16 30.5h22.5a11 11 0 0 1 11 11v.5a11 11 0 0 1-11 11H27l-8 6.2V52a11 11 0 0 1-8.2-4.2A11 11 0 0 1 16 30.5Z"
         className="fill-green"

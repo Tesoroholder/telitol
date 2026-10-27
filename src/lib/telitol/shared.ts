@@ -43,7 +43,10 @@ export function formatWhen(iso: string): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 86400 * 7) return `${Math.floor(seconds / 86400)}d ago`;
-  return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(t).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 export type QuestionCard = {
@@ -59,6 +62,12 @@ export type QuestionCard = {
   createdAt: string;
 };
 
+export type QuestionPage = {
+  items: QuestionCard[];
+  /** Pass back as `cursor` to load the next page; null on the last page. */
+  nextCursor: string | null;
+};
+
 export type AnswerCard = {
   id: number;
   body: string;
@@ -70,13 +79,13 @@ export type AnswerCard = {
   createdAt: string;
 };
 
-export type LayaMessage = {
+export type AiMessage = {
   id: number;
   role: "user" | "assistant";
   content: string;
 };
 
-export type LayaThread = {
+export type AiThread = {
   id: number;
   title: string;
   updatedAt: string;

@@ -19,6 +19,7 @@ function HomePage() {
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"new" | "trending">("new");
 
   // Debounce typing so each keystroke doesn't hit the server.
   useEffect(() => {
@@ -31,7 +32,11 @@ function HomePage() {
     setQuestions(null);
     setError("");
     void listQuestions({
-      data: { category: category === "all" ? undefined : category, search },
+      data: {
+        category: category === "all" ? undefined : category,
+        search,
+        sort,
+      },
     })
       .then((page) => {
         if (!live) return;
@@ -44,7 +49,7 @@ function HomePage() {
     return () => {
       live = false;
     };
-  }, [category, search]);
+  }, [category, search, sort]);
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
@@ -55,6 +60,7 @@ function HomePage() {
           cursor: nextCursor,
           category: category === "all" ? undefined : category,
           search,
+          sort,
         },
       });
       setQuestions((current) => [...(current ?? []), ...page.items]);
@@ -106,6 +112,32 @@ function HomePage() {
           placeholder="Search questions"
           className="h-12 w-full rounded-full border border-line bg-card px-4 text-base outline-none placeholder:text-muted focus-visible:border-green"
         />
+      </div>
+
+      <div
+        className="grid grid-cols-2 gap-1 rounded-full bg-mint p-1"
+        role="tablist"
+        aria-label="Sort questions"
+      >
+        {(
+          [
+            ["new", "Newest"],
+            ["trending", "Trending"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={sort === value}
+            onClick={() => setSort(value)}
+            className={`h-10 rounded-full text-sm font-semibold ${
+              sort === value ? "bg-card text-ink shadow-card" : "text-muted"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="chip-row -mx-4 flex gap-2 overflow-x-auto px-4">

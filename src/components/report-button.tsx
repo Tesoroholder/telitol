@@ -82,7 +82,8 @@ export function ReportButton({
       {reason === "self_harm" ? (
         <p className="text-xs text-muted">
           If someone is in danger now, contact local emergency services. In
-          India: iCall 9152987821, AASRA 9820466726.
+          Ghana: 112 or 0800 678 678. In India: iCall 9152987821. Globally:
+          findahelpline.com.
         </p>
       ) : null}
       <div className="flex gap-2">

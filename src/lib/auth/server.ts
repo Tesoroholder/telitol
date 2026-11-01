@@ -60,7 +60,7 @@ function hostOf(url: string | undefined): string | undefined {
  * Public domains of this Vercel project that no env var reports (project
  * aliases). Add custom domains here or via TRUSTED_ORIGINS.
  */
-const PROJECT_DOMAINS = ["telitol-67uk.vercel.app"];
+const PROJECT_DOMAINS = ["telitol-67uk.vercel.app", "telitol.vercel.app"];
 
 /**
  * Hosts this app answers on. The auth base URL (and so the OAuth redirect_uri)

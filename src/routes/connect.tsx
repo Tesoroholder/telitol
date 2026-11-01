@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import type * as AblyTypes from "ably";
 import { ErrorNote, PrimaryButton, SecondaryButton } from "@/components/fields";
 import { ReportButton } from "@/components/report-button";
@@ -256,18 +256,15 @@ function ConnectPage() {
 
   if (state.status === "waiting") {
     return (
-      <div className="space-y-4 rounded-3xl border border-line bg-card p-5 text-center">
-        <p className="text-lg font-semibold">Looking for someone…</p>
-        <p className="text-sm text-muted">
-          {state.topic
-            ? `Topic: ${CATEGORIES.find((c) => c.id === state.topic)?.label}. `
-            : ""}
-          Keep this page open. It usually takes a minute or two.
-        </p>
-        <SecondaryButton onClick={() => void leave()} disabled={pending}>
-          Stop looking
-        </SecondaryButton>
-      </div>
+      <WaitingCard
+        topicLabel={
+          state.topic
+            ? CATEGORIES.find((c) => c.id === state.topic)?.label
+            : undefined
+        }
+        pending={pending}
+        onLeave={() => void leave()}
+      />
     );
   }
 
@@ -377,6 +374,64 @@ function ConnectPage() {
           </div>
         </form>
       )}
+    </div>
+  );
+}
+
+/** How long to wait before admitting nobody may be around. */
+const QUIET_AFTER_MS = 45_000;
+
+function WaitingCard({
+  topicLabel,
+  pending,
+  onLeave,
+}: {
+  topicLabel?: string;
+  pending: boolean;
+  onLeave: () => void;
+}) {
+  const [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setQuiet(true), QUIET_AFTER_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="space-y-4 rounded-3xl border border-line bg-card p-5 text-center">
+      <p className="text-lg font-semibold">Looking for someone…</p>
+      <p className="text-sm text-muted">
+        {topicLabel ? `Topic: ${topicLabel}. ` : ""}
+        You'll be matched with the next person who opens Connect. Keep this page
+        open.
+      </p>
+      {quiet && (
+        <div className="space-y-3 rounded-2xl bg-mint p-4 text-sm">
+          <p className="font-medium text-ink">
+            Few people are on Connect right now.
+            {topicLabel ? " Choosing “Any topic” widens the search." : ""}
+          </p>
+          <p className="text-muted">
+            You can keep waiting, or get an answer another way:
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Link
+              to="/ai"
+              className="inline-flex h-10 items-center rounded-full bg-green px-4 font-semibold text-on-green"
+            >
+              Talk to AI
+            </Link>
+            <Link
+              to="/ask"
+              className="inline-flex h-10 items-center rounded-full border border-line bg-card px-4 font-semibold text-ink"
+            >
+              Ask the community
+            </Link>
+          </div>
+        </div>
+      )}
+      <SecondaryButton onClick={onLeave} disabled={pending}>
+        Stop looking
+      </SecondaryButton>
     </div>
   );
 }

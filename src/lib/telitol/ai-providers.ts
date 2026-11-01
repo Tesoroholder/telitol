@@ -19,14 +19,16 @@ const PROVIDERS: Provider[] = [
     name: "groq",
     keyEnv: "GROQ_API_KEY",
     modelEnv: "GROQ_MODEL",
-    defaultModel: "llama-3.3-70b-versatile",
+    // llama-3.3-70b-versatile was shut down on 2026-08-16.
+    defaultModel: "openai/gpt-oss-120b",
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
   },
   {
     name: "gemini",
     keyEnv: "GEMINI_API_KEY",
     modelEnv: "GEMINI_MODEL",
-    defaultModel: "gemini-2.5-flash",
+    // 2.5 models only serve keys that used them before; new keys need 3.x.
+    defaultModel: "gemini-3.8-flash",
     endpoint:
       "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
   },
@@ -92,7 +94,8 @@ export async function complete(
         signal: AbortSignal.timeout(25_000),
         body: JSON.stringify({
           model: provider.model,
-          max_tokens: 600,
+          // Reasoning models spend part of this budget thinking before they answer.
+          max_tokens: 2000,
           temperature: 0.6,
           messages,
         }),

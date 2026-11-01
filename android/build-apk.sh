@@ -1,25 +1,43 @@
 #!/bin/sh
-# Builds a debug-signed TeliTall.apk. Requires Android SDK 34 build-tools.
+# Builds a debug-signed TeliTol.apk. Requires Android SDK 34 build-tools.
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname "$0")" && pwd)"
 SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/tmp/android-sdk}}"
 BT="$SDK/build-tools/34.0.0"
 PLATFORM="$SDK/platforms/android-34/android.jar"
-OUT="${TMPDIR:-/tmp}/telitall-apk-out"
-DEST="${1:-$ROOT/../artifacts/TeliTall.apk}"
+OUT="${TMPDIR:-/tmp}/telitol-apk-out"
+DEST="${1:-$ROOT/../artifacts/TeliTol.apk}"
 
-if [ ! -x "$BT/aapt2" ] || [ ! -f "$PLATFORM" ]; then
+# Windows SDKs ship some tools as .exe/.bat; find whichever exists.
+bt() {
+  for ext in "" .exe .bat; do
+    if [ -f "$BT/$1$ext" ]; then echo "$BT/$1$ext"; return; fi
+  done
+  echo "$BT/$1"
+}
+AAPT2="$(bt aapt2)"
+D8="$(bt d8)"
+ZIPALIGN="$(bt zipalign)"
+APKSIGNER="$(bt apksigner)"
+PYTHON="${PYTHON:-python3}"
+
+if [ ! -f "$AAPT2" ] || [ ! -f "$PLATFORM" ]; then
   echo "Android SDK not found at $SDK (need platforms/android-34 and build-tools/34.0.0)." >&2
   exit 1
 fi
 
-python3 "$ROOT/make-icons.py"
+# Launcher icons are committed; regenerate them only when Pillow is available.
+if "$PYTHON" -c "import PIL" 2>/dev/null; then
+  "$PYTHON" "$ROOT/make-icons.py"
+else
+  echo "Pillow not installed; using the committed launcher icons."
+fi
 rm -rf "$OUT"
 mkdir -p "$OUT/classes" "$OUT/compiled" "$(dirname "$DEST")"
 
-"$BT/aapt2" compile --dir "$ROOT/app/src/main/res" -o "$OUT/compiled/resources.zip"
-"$BT/aapt2" link \
+"$AAPT2" compile --dir "$ROOT/app/src/main/res" -o "$OUT/compiled/resources.zip"
+"$AAPT2" link \
   -I "$PLATFORM" \
   --manifest "$ROOT/app/src/main/AndroidManifest.xml" \
   -o "$OUT/linked.apk" \
@@ -27,29 +45,28 @@ mkdir -p "$OUT/classes" "$OUT/compiled" "$(dirname "$DEST")"
   "$OUT/compiled/resources.zip"
 
 javac --release 17 -classpath "$PLATFORM" -d "$OUT/classes" \
-  "$ROOT/app/src/main/java/app/telitall/MainActivity.java"
+  "$ROOT/app/src/main/java/app/telitol/MainActivity.java"
 
-"$BT/d8" --min-api 24 --output "$OUT" "$OUT/classes/app/telitall/"*.class
+"$D8" --min-api 24 --output "$OUT" "$OUT/classes/app/telitol/"*.class
 
 cp "$OUT/linked.apk" "$OUT/unsigned.apk"
-python3 - "$OUT/unsigned.apk" "$OUT/classes.dex" "$ROOT/app/src/main/assets/www/index.html" <<'PY'
+"$PYTHON" - "$OUT/unsigned.apk" "$OUT/classes.dex" <<'PY'
 import sys
 import zipfile
-apk, dex, html = sys.argv[1:]
+apk, dex = sys.argv[1:]
 with zipfile.ZipFile(apk, "a") as zf:
     zf.write(dex, "classes.dex")
-    zf.write(html, "assets/www/index.html")
 PY
 
-"$BT/zipalign" -f -p 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
+"$ZIPALIGN" -f -p 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
 
 if [ ! -f "$OUT/debug.keystore" ]; then
   keytool -genkeypair -keystore "$OUT/debug.keystore" -storepass android -keypass android \
     -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-    -dname "CN=TeliTall Debug,O=TeliTall,C=IN"
+    -dname "CN=TeliTol Debug,O=TeliTol,C=GH"
 fi
 
-"$BT/apksigner" sign \
+"$APKSIGNER" sign \
   --ks "$OUT/debug.keystore" \
   --ks-pass pass:android \
   --key-pass pass:android \
@@ -57,5 +74,5 @@ fi
   --out "$DEST" \
   "$OUT/aligned.apk"
 
-"$BT/apksigner" verify --verbose "$DEST"
+"$APKSIGNER" verify --verbose "$DEST"
 echo "Wrote $DEST"

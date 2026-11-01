@@ -113,3 +113,6 @@ export type ProfileData = {
   questions: MineQuestion[];
   answers: MineAnswer[];
 };
+
+/** Window event that tells the header bell to refresh its unread count. */
+export const NOTIFICATIONS_CHANGED = "telitol:notifications-changed";

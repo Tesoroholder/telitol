@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth/client";
 import { getAuthOptions } from "@/lib/auth/options";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -25,10 +25,14 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [social, setSocial] = useState<SocialProvider[]>([]);
+  const [canReset, setCanReset] = useState(false);
 
   useEffect(() => {
     void getAuthOptions()
-      .then((options) => setSocial(options.social))
+      .then((options) => {
+        setSocial(options.social);
+        setCanReset(options.passwordReset);
+      })
       .catch(() => setSocial([]));
   }, []);
 
@@ -191,6 +195,14 @@ function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="At least 8 characters"
             />
+            {mode === "in" && canReset ? (
+              <Link
+                to="/forgot-password"
+                className="block text-right text-sm font-medium text-green hover:underline"
+              >
+                Forgot password?
+              </Link>
+            ) : null}
             <ErrorNote message={error} />
             <PrimaryButton type="submit" className="w-full" disabled={pending}>
               {pending

@@ -71,7 +71,7 @@ function QuestionPage() {
         data: {
           questionId: question.id,
           body,
-          displayName: user?.displayName ?? user?.primaryEmail ?? "",
+          displayName: user?.displayName ?? "",
         },
       });
       if (!result.ok) {

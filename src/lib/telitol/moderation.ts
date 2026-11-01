@@ -1,4 +1,5 @@
 import type { Sql } from "../db.ts";
+import { notify } from "./notifications.ts";
 
 /**
  * Reports, auto-hiding and moderator actions. Plain functions over `Sql` (no
@@ -292,6 +293,26 @@ export async function resolveReports(
       on conflict (user_id) do update
         set suspended_until = greatest(coalesce(profiles.suspended_until, now()), now() + make_interval(days => ${days}::int))
     `;
+    await notify(tx, { userId: owner, kind: "suspended" });
+  }
+  // Tell the author when their question or answer is taken down.
+  if (owner && input.action === "hide" && targetType !== "connect_room") {
+    const questionId =
+      targetType === "question"
+        ? numericId
+        : Number(
+            (
+              await tx<{
+                question_id: number;
+              }>`select question_id from answers where id = ${numericId}`
+            )[0]?.question_id ?? 0,
+          ) || null;
+    await notify(tx, {
+      userId: owner,
+      kind: "hidden",
+      questionId,
+      answerId: targetType === "answer" ? numericId : null,
+    });
   }
   await tx`
     insert into moderation_actions (moderator_id, action, target_type, target_id, note)

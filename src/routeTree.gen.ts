@@ -13,10 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LayaRouteImport } from './routes/laya'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ModRouteImport } from './routes/mod'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as QIdRouteImport } from './routes/q.$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -40,6 +43,11 @@ const ConnectRoute = ConnectRouteImport.update({
   path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayaRoute = LayaRouteImport.update({
   id: '/laya',
   path: '/laya',
@@ -55,9 +63,19 @@ const ModRoute = ModRouteImport.update({
   path: '/mod',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QIdRoute = QIdRouteImport.update({
@@ -76,10 +94,13 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AiRoute
   '/ask': typeof AskRoute
   '/connect': typeof ConnectRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/laya': typeof LayaRoute
   '/login': typeof LoginRoute
   '/mod': typeof ModRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/q/$id': typeof QIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -88,10 +109,13 @@ export interface FileRoutesByTo {
   '/ai': typeof AiRoute
   '/ask': typeof AskRoute
   '/connect': typeof ConnectRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/laya': typeof LayaRoute
   '/login': typeof LoginRoute
   '/mod': typeof ModRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/q/$id': typeof QIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -101,10 +125,13 @@ export interface FileRoutesById {
   '/ai': typeof AiRoute
   '/ask': typeof AskRoute
   '/connect': typeof ConnectRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/laya': typeof LayaRoute
   '/login': typeof LoginRoute
   '/mod': typeof ModRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/q/$id': typeof QIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -115,10 +142,13 @@ export interface FileRouteTypes {
     | '/ai'
     | '/ask'
     | '/connect'
+    | '/forgot-password'
     | '/laya'
     | '/login'
     | '/mod'
+    | '/notifications'
     | '/profile'
+    | '/reset-password'
     | '/q/$id'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -127,10 +157,13 @@ export interface FileRouteTypes {
     | '/ai'
     | '/ask'
     | '/connect'
+    | '/forgot-password'
     | '/laya'
     | '/login'
     | '/mod'
+    | '/notifications'
     | '/profile'
+    | '/reset-password'
     | '/q/$id'
     | '/api/auth/$'
   id:
@@ -139,10 +172,13 @@ export interface FileRouteTypes {
     | '/ai'
     | '/ask'
     | '/connect'
+    | '/forgot-password'
     | '/laya'
     | '/login'
     | '/mod'
+    | '/notifications'
     | '/profile'
+    | '/reset-password'
     | '/q/$id'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -152,10 +188,13 @@ export interface RootRouteChildren {
   AiRoute: typeof AiRoute
   AskRoute: typeof AskRoute
   ConnectRoute: typeof ConnectRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LayaRoute: typeof LayaRoute
   LoginRoute: typeof LoginRoute
   ModRoute: typeof ModRoute
+  NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   QIdRoute: typeof QIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -190,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/laya': {
       id: '/laya'
       path: '/laya'
@@ -211,11 +257,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/q/$id': {
@@ -240,10 +300,13 @@ const rootRouteChildren: RootRouteChildren = {
   AiRoute: AiRoute,
   AskRoute: AskRoute,
   ConnectRoute: ConnectRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LayaRoute: LayaRoute,
   LoginRoute: LoginRoute,
   ModRoute: ModRoute,
+  NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   QIdRoute: QIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

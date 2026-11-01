@@ -18,6 +18,15 @@ import { dirname, join } from "node:path";
 import pg from "pg";
 import { pendingMigrations } from "./migration-plan.mjs";
 
+// Vercel preview builds (unmerged branches) must never change the production
+// schema. Migrations run only on production deploys and local/CI runs.
+if (process.env.VERCEL_ENV === "preview") {
+  console.log(
+    "[migrate] preview deployment — skipping; migrations run on production deploys only.",
+  );
+  process.exit(0);
+}
+
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
   console.log(
@@ -26,7 +35,11 @@ if (!databaseUrl) {
   process.exit(0);
 }
 
-const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
+const migrationsDir = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "migrations",
+);
 
 async function main() {
   let entries;
@@ -48,9 +61,9 @@ async function main() {
     await client.query(
       "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
     );
-    const applied = (await client.query("SELECT name FROM _migrations")).rows.map(
-      (r) => r.name,
-    );
+    const applied = (
+      await client.query("SELECT name FROM _migrations")
+    ).rows.map((r) => r.name);
 
     let count = 0;
     for (const { name } of pendingMigrations(entries, applied)) {
@@ -59,7 +72,9 @@ async function main() {
         await client.query("BEGIN");
         // pg's simple-query protocol runs a whole multi-statement file at once.
         await client.query(text);
-        await client.query("INSERT INTO _migrations (name) VALUES ($1)", [name]);
+        await client.query("INSERT INTO _migrations (name) VALUES ($1)", [
+          name,
+        ]);
         await client.query("COMMIT");
       } catch (err) {
         console.error(`[migrate] error applying ${name}`);
@@ -73,7 +88,11 @@ async function main() {
       console.log(`[migrate] applied ${name}`);
       count += 1;
     }
-    console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+    console.log(
+      count
+        ? `[migrate] done — ${count} migration(s) applied.`
+        : "[migrate] up to date.",
+    );
   } finally {
     client.release();
     await pool.end();
@@ -85,8 +104,14 @@ main().catch((err) => {
   for (const key of ["code", "detail", "hint", "position", "where"]) {
     if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
   }
-  if (err?.code === "ENOTFOUND" || err?.code === "ECONNREFUSED" || err?.code === "ETIMEDOUT") {
-    console.warn("[migrate] Warning: DATABASE_URL host is unreachable during build. Continuing build so app can deploy.");
+  if (
+    err?.code === "ENOTFOUND" ||
+    err?.code === "ECONNREFUSED" ||
+    err?.code === "ETIMEDOUT"
+  ) {
+    console.warn(
+      "[migrate] Warning: DATABASE_URL host is unreachable during build. Continuing build so app can deploy.",
+    );
     process.exit(0);
   }
   process.exit(1);

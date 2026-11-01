@@ -38,7 +38,7 @@ function AskPage() {
           body,
           category,
           kind,
-          displayName: user?.displayName ?? user?.primaryEmail ?? "",
+          displayName: user?.displayName ?? "",
         },
       });
       if (!result.ok) {

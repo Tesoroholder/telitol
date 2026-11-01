@@ -14,6 +14,7 @@ import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
+import { passwordResetEmail, sendEmail } from "../email.server";
 import { env } from "../env.server";
 import { pgliteDialect } from "./pglite-dialect";
 
@@ -123,6 +124,13 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     maxPasswordLength: 128,
+    // Emails a link to /reset-password (see email.server.ts). Old sessions are
+    // signed out once the password changes.
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail(passwordResetEmail(user.email, user.name, url));
+    },
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
   },
   ...(enabledSocialProviders.length > 0 ? { socialProviders } : {}),
   account: {
@@ -139,6 +147,8 @@ export const auth = betterAuth({
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/sign-up/email": { window: 3600, max: 5 },
+      "/request-password-reset": { window: 3600, max: 3 },
+      "/reset-password": { window: 600, max: 10 },
     },
   },
   plugins: [tanstackStartCookies()],

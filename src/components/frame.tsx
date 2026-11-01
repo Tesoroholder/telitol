@@ -4,6 +4,7 @@ import { House, SquarePen, CircleUser, MessagesSquare } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ensureProfileFn } from "@/lib/telitol/server";
 import { LogoMark, Wordmark } from "@/components/logo";
+import { NotificationBell } from "@/components/notification-bell";
 
 function BootScreen() {
   return (
@@ -89,6 +90,7 @@ function Shell({ children }: { children: ReactNode }) {
             <LogoMark />
             <Wordmark className="text-xl" />
           </Link>
+          <NotificationBell />
         </div>
       </header>
       <main className="mx-auto w-full max-w-xl flex-1 overflow-y-auto px-4 py-5">
@@ -117,6 +119,8 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
+const RECOVERY_PATHS = new Set(["/forgot-password", "/reset-password"]);
+
 export function Frame() {
   const [mounted, setMounted] = useState(false);
   const { user, isPending } = useCurrentUserState();
@@ -127,6 +131,8 @@ export function Frame() {
   }, []);
 
   if (!mounted || isPending) return <BootScreen />;
+  // Password recovery pages work whether or not someone is signed in.
+  if (RECOVERY_PATHS.has(path)) return <Outlet />;
   if (!user) {
     if (path !== "/login") return <Navigate to="/login" />;
     return <Outlet />;

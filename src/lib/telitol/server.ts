@@ -21,6 +21,7 @@ import {
   type QuestionRow,
 } from "@/lib/telitol/questions";
 import { suspensionMessage } from "@/lib/telitol/moderation";
+import { notify } from "@/lib/telitol/notifications";
 import { allowAction, SLOW_DOWN } from "@/lib/telitol/rate-limit";
 
 /**
@@ -49,13 +50,17 @@ How you answer:
 
 type Err = { ok: false; error: string };
 
-function cleanName(input: string): string {
-  const name = input
+/** A public display name: never an email address, no markup, at most 40 chars. */
+function displayNameOf(input: string): string {
+  return (input.split("@")[0] ?? "")
     .replace(/[<>]/g, "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 40);
-  return name || "Member";
+}
+
+function cleanName(input: string): string {
+  return displayNameOf(input) || "Member";
 }
 
 async function ensureProfile(
@@ -108,11 +113,7 @@ export const updateProfile = createServerFn({ method: "POST" })
       context,
       data,
     }): Promise<{ ok: true; displayName: string } | Err> => {
-      const name = data.displayName
-        .replace(/[<>]/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 40);
+      const name = displayNameOf(data.displayName);
       if (name.length < 2)
         return {
           ok: false,
@@ -385,10 +386,14 @@ export const createAnswer = createServerFn({ method: "POST" })
       if (suspended) return { ok: false, error: suspended };
       if (!(await allowAction(sql, "answer", context.userId)))
         return { ok: false, error: SLOW_DOWN };
-      const found = await sql<{
-        id: number;
-      }>`select id from questions where id = ${data.questionId}`;
-      if (!found[0]) return { ok: false, error: "That question is gone." };
+      // Hidden questions can only be answered by their author.
+      const found = await sql<{ id: number; user_id: string }>`
+        select id, user_id from questions
+        where id = ${data.questionId}
+          and (hidden_at is null or user_id = ${context.userId})
+      `;
+      const question = found[0];
+      if (!question) return { ok: false, error: "That question is gone." };
       const profile = await ensureProfile(
         sql,
         context.userId,
@@ -399,8 +404,18 @@ export const createAnswer = createServerFn({ method: "POST" })
       values (${data.questionId}, ${context.userId}, ${profile.displayName}, ${data.body})
       returning id
     `;
+      const answerId = Number(rows[0]?.id);
       await addRep(sql, context.userId, 2);
-      return { ok: true, id: Number(rows[0]?.id) };
+      if (question.user_id !== context.userId) {
+        await notify(sql, {
+          userId: question.user_id,
+          kind: "answer",
+          questionId: question.id,
+          answerId,
+          actorName: profile.displayName,
+        }).catch((err: unknown) => console.error("[notify] answer", err));
+      }
+      return { ok: true, id: answerId };
     },
   );
 
@@ -415,8 +430,12 @@ export const voteHelpful = createServerFn({ method: "POST" })
         return { ok: false, error: "That answer is missing." };
       }
       const sql = await getSql();
-      const rows = await sql<{ id: number; user_id: string }>`
-      select id, user_id from answers where id = ${data.answerId}
+      const rows = await sql<{
+        id: number;
+        user_id: string;
+        question_id: number;
+      }>`
+      select id, user_id, question_id from answers where id = ${data.answerId}
     `;
       const answer = rows[0];
       if (!answer) return { ok: false, error: "That answer is gone." };
@@ -443,6 +462,12 @@ export const voteHelpful = createServerFn({ method: "POST" })
         returning helpful
       `;
         await addRep(tx, answer.user_id, 1);
+        await notify(tx, {
+          userId: answer.user_id,
+          kind: "helpful",
+          questionId: answer.question_id,
+          answerId: answer.id,
+        });
         return Number(updated[0]?.helpful ?? 0);
       });
       if (helpful == null)
@@ -494,8 +519,15 @@ export const acceptAnswer = createServerFn({ method: "POST" })
       for (const prev of previous) {
         if (prev.user_id !== answer.asker) await addRep(tx, prev.user_id, -5);
       }
-      if (answer.answer_user !== answer.asker)
+      if (answer.answer_user !== answer.asker) {
         await addRep(tx, answer.answer_user, 5);
+        await notify(tx, {
+          userId: answer.answer_user,
+          kind: "best",
+          questionId: answer.question_id,
+          answerId: answer.id,
+        });
+      }
     });
     return { ok: true };
   });

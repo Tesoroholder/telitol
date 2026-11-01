@@ -198,7 +198,12 @@ export const listQuestions = createServerFn({ method: "GET" })
   .validator(
     (
       input:
-        | { cursor?: string | null; category?: string; search?: string }
+        | {
+            cursor?: string | null;
+            category?: string;
+            search?: string;
+            sort?: string;
+          }
         | undefined,
     ) => ({
       cursor: typeof input?.cursor === "string" ? input.cursor : null,
@@ -210,6 +215,8 @@ export const listQuestions = createServerFn({ method: "GET" })
         typeof input?.search === "string"
           ? input.search.trim().slice(0, 100)
           : "",
+      sort:
+        input?.sort === "trending" ? ("trending" as const) : ("new" as const),
     }),
   )
   .handler(async ({ context, data }): Promise<QuestionPage> => {

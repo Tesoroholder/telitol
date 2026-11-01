@@ -47,23 +47,46 @@ function withScheme(host: string | undefined): string | undefined {
   return host.startsWith("http") ? host : `https://${host}`;
 }
 
-// Canonical public URL: explicit override, then Vercel's production domain, then
-// this deployment's own URL (preview deploys), then local dev.
-const baseURL =
-  env("BETTER_AUTH_URL") ??
-  withScheme(env("VERCEL_PROJECT_PRODUCTION_URL")) ??
-  withScheme(env("VERCEL_URL")) ??
-  "http://localhost:8080";
+function hostOf(url: string | undefined): string | undefined {
+  try {
+    return url ? new URL(withScheme(url) as string).host : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
-// Origins allowed to make credentialed auth POSTs. Exact hosts only — never a
-// `*.vercel.app` wildcard, which would trust every other Vercel app.
-const trustedOrigins = [
-  baseURL,
-  withScheme(env("VERCEL_URL")),
-  withScheme(env("VERCEL_BRANCH_URL")),
-  ...(env("TRUSTED_ORIGINS") ?? "").split(",").map((o) => o.trim()),
-  ...(isProduction ? [] : ["http://localhost:8080", "http://127.0.0.1:8080"]),
-].filter((origin): origin is string => Boolean(origin));
+/**
+ * Public domains of this Vercel project that no env var reports (project
+ * aliases). Add custom domains here or via TRUSTED_ORIGINS.
+ */
+const PROJECT_DOMAINS = ["telitol-67uk.vercel.app"];
+
+/**
+ * Hosts this app answers on. The auth base URL (and so the OAuth redirect_uri)
+ * follows the host each request arrived on, so signing in on any of these
+ * returns you to the same domain. Every host here is also a trusted origin for
+ * credentialed POSTs, so exact hosts only — never a `*.vercel.app` wildcard,
+ * which would trust every other Vercel app.
+ */
+const allowedHosts = [
+  ...new Set(
+    [
+      hostOf(env("BETTER_AUTH_URL")),
+      ...PROJECT_DOMAINS,
+      env("VERCEL_PROJECT_PRODUCTION_URL"),
+      env("VERCEL_URL"),
+      env("VERCEL_BRANCH_URL"),
+      ...(env("TRUSTED_ORIGINS") ?? "").split(",").map((o) => hostOf(o.trim())),
+      ...(isProduction ? [] : ["localhost:8080", "127.0.0.1:8080"]),
+    ].filter((host): host is string => Boolean(host)),
+  ),
+];
+
+// Requests on any other host get this base URL instead.
+const fallbackURL =
+  env("BETTER_AUTH_URL") ??
+  withScheme(PROJECT_DOMAINS[0]) ??
+  "http://localhost:8080";
 
 const databaseUrl = env("DATABASE_URL");
 const database = databaseUrl
@@ -89,10 +112,13 @@ export const enabledSocialProviders = Object.keys(socialProviders) as (
 )[];
 
 export const auth = betterAuth({
-  baseURL,
+  baseURL: {
+    allowedHosts,
+    protocol: isProduction ? "https" : "auto",
+    fallback: fallbackURL,
+  },
   secret: authSecret(),
   database,
-  trustedOrigins,
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,

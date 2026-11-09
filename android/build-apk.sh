@@ -60,17 +60,23 @@ PY
 
 "$ZIPALIGN" -f -p 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
 
-if [ ! -f "$OUT/debug.keystore" ]; then
-  keytool -genkeypair -keystore "$OUT/debug.keystore" -storepass android -keypass android \
+# Signing key: a permanent one from TELITOL_KEYSTORE (+ _PASS, _ALIAS) when
+# set, so each new build installs over the last; otherwise a throwaway
+# debug key, which means uninstalling the old app before installing.
+KEYSTORE="${TELITOL_KEYSTORE:-$OUT/debug.keystore}"
+KEYSTORE_PASS="${TELITOL_KEYSTORE_PASS:-android}"
+KEY_ALIAS="${TELITOL_KEY_ALIAS:-androiddebugkey}"
+if [ -z "${TELITOL_KEYSTORE:-}" ] && [ ! -f "$KEYSTORE" ]; then
+  keytool -genkeypair -keystore "$KEYSTORE" -storepass android -keypass android \
     -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
     -dname "CN=TeliTol Debug,O=TeliTol,C=GH"
 fi
 
 "$APKSIGNER" sign \
-  --ks "$OUT/debug.keystore" \
-  --ks-pass pass:android \
-  --key-pass pass:android \
-  --ks-key-alias androiddebugkey \
+  --ks "$KEYSTORE" \
+  --ks-pass "pass:$KEYSTORE_PASS" \
+  --key-pass "pass:$KEYSTORE_PASS" \
+  --ks-key-alias "$KEY_ALIAS" \
   --out "$DEST" \
   "$OUT/aligned.apk"
 

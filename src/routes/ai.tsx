@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ErrorNote, PrimaryButton } from "@/components/fields";
 import { ModeSwitch } from "@/components/mode-switch";
+import { ReportButton } from "@/components/report-button";
 import { askAi, getAiThread, listAiThreads } from "@/lib/telitol/server";
+import { reportContent } from "@/lib/telitol/moderation-server";
 import type { AiMessage, AiThread } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/ai")({ component: AiPage });
@@ -194,6 +196,24 @@ function AiPage() {
               {message.role === "user" ? "You" : "AI"}
             </p>
             <p className="whitespace-pre-wrap">{message.content}</p>
+            {message.role === "assistant" ? (
+              <div className="mt-2">
+                <ReportButton
+                  key={message.id}
+                  label="Report this reply"
+                  onReport={(reason, details) =>
+                    reportContent({
+                      data: {
+                        targetType: "ai_message",
+                        targetId: message.id,
+                        reason,
+                        details,
+                      },
+                    })
+                  }
+                />
+              </div>
+            ) : null}
           </article>
         ))}
 

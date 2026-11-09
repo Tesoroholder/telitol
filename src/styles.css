@@ -13,6 +13,8 @@
   --color-mint: #e7f4ee;
   --color-on-green: #f4fff9;
   --color-on-ink: #f4faf7;
+  --color-danger: #b42318;
+  --color-on-danger: #fff7f6;
   --shadow-card: 0 1px 2px rgb(11 35 64 / 0.04);
 }
 
@@ -77,6 +79,25 @@
 }
 .ai-dot:nth-child(3) {
   animation-delay: 0.3s;
+}
+
+/* Long-form text on the Privacy, Terms and Delete account pages. */
+.legal h2 {
+  margin-top: 1.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.legal p,
+.legal li {
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+.legal ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.legal li + li {
+  margin-top: 0.35rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

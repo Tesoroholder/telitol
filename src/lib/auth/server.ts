@@ -13,7 +13,8 @@ import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
-import { ensureDbReady, getPglite } from "../db";
+import { ensureDbReady, getPglite, withTransaction } from "../db";
+import { deleteUserData } from "../telitol/account";
 import { passwordResetEmail, sendEmail } from "../email.server";
 import { env } from "../env.server";
 import { pgliteDialect } from "./pglite-dialect";
@@ -133,6 +134,18 @@ export const auth = betterAuth({
     revokeSessionsOnPasswordReset: true,
   },
   ...(enabledSocialProviders.length > 0 ? { socialProviders } : {}),
+  user: {
+    // Google Play requires in-app and web account deletion. Email accounts must
+    // re-enter their password; Google/X accounts need a session under a day
+    // old (Better Auth's default freshAge). App data goes first, in one
+    // transaction; if it fails, the account is left untouched.
+    deleteUser: {
+      enabled: true,
+      beforeDelete: async (user) => {
+        await withTransaction((tx) => deleteUserData(tx, user.id));
+      },
+    },
+  },
   account: {
     encryptOAuthTokens: true,
     accountLinking: { enabled: true, trustedProviders: ["google"] },
@@ -149,6 +162,7 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 3600, max: 5 },
       "/request-password-reset": { window: 3600, max: 3 },
       "/reset-password": { window: 600, max: 10 },
+      "/delete-user": { window: 600, max: 5 },
     },
   },
   plugins: [tanstackStartCookies()],

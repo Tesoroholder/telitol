@@ -10,6 +10,8 @@ import {
   TextField,
 } from "@/components/fields";
 import { LogoMark, Wordmark } from "@/components/logo";
+import { LegalLinks } from "@/components/public-page";
+import { MIN_AGE } from "@/lib/telitol/legal";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 
@@ -26,6 +28,7 @@ function LoginPage() {
   const [pending, setPending] = useState(false);
   const [social, setSocial] = useState<SocialProvider[]>([]);
   const [canReset, setCanReset] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     void getAuthOptions()
@@ -63,6 +66,12 @@ function LoginPage() {
     }
     if (password.length < 8) {
       setError("Use at least 8 characters for the password.");
+      return;
+    }
+    if (mode === "up" && !agreed) {
+      setError(
+        `Confirm you're ${MIN_AGE} or older and agree to the Terms and Privacy Policy.`,
+      );
       return;
     }
     setPending(true);
@@ -195,6 +204,30 @@ function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="At least 8 characters"
             />
+            {mode === "up" ? (
+              <label className="flex items-start gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(event) => setAgreed(event.target.checked)}
+                  className="mt-0.5 size-5 shrink-0 accent-green"
+                />
+                <span>
+                  I'm {MIN_AGE} or older and I agree to the{" "}
+                  <Link to="/terms" className="font-medium text-green underline">
+                    Terms of Use
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/privacy"
+                    className="font-medium text-green underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+            ) : null}
             {mode === "in" && canReset ? (
               <Link
                 to="/forgot-password"
@@ -231,8 +264,14 @@ function LoginPage() {
                   </SecondaryButton>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-muted">
+                New here? By continuing with Google or X, you confirm you're{" "}
+                {MIN_AGE} or older and agree to the Terms of Use and Privacy
+                Policy.
+              </p>
             </>
           ) : null}
+          <LegalLinks className="mt-6 justify-center" />
         </section>
       </div>
     </main>

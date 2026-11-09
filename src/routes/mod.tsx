@@ -11,6 +11,7 @@ const TARGET_LABEL = {
   question: "Question",
   answer: "Answer",
   connect_room: "Connect chat",
+  ai_message: "AI reply",
 } as const;
 
 function ModerationPage() {
@@ -137,14 +138,19 @@ function ModerationPage() {
                   disabled={busy === key}
                   onClick={() => void act(group, "hide")}
                 >
-                  {group.targetType === "connect_room" ? "Uphold" : "Hide"}
+                  {group.targetType === "question" ||
+                  group.targetType === "answer"
+                    ? "Hide"
+                    : "Uphold"}
                 </SecondaryButton>
-                <SecondaryButton
-                  disabled={busy === key}
-                  onClick={() => void act(group, "hide", 7)}
-                >
-                  Uphold + suspend 7 days
-                </SecondaryButton>
+                {group.targetType !== "ai_message" ? (
+                  <SecondaryButton
+                    disabled={busy === key}
+                    onClick={() => void act(group, "hide", 7)}
+                  >
+                    Uphold + suspend 7 days
+                  </SecondaryButton>
+                ) : null}
                 {group.hidden ? (
                   <SecondaryButton
                     disabled={busy === key}

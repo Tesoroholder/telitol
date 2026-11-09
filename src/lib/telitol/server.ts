@@ -193,6 +193,22 @@ export const getProfile = createServerFn({ method: "GET" })
     };
   });
 
+/** What the delete-account form needs: whether to ask for a password. */
+export const getAccountInfo = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<{ hasPassword: boolean }> => {
+    const sql = await getSql();
+    const rows = await sql<{ has_password: unknown }>`
+      select exists (
+        select 1 from account
+        where "userId" = ${context.userId}
+          and "providerId" = 'credential'
+          and password is not null
+      ) as has_password
+    `;
+    return { hasPassword: asBool(rows[0]?.has_password) };
+  });
+
 /** Newest-first feed, 20 at a time — see `fetchQuestionPage`. */
 export const listQuestions = createServerFn({ method: "GET" })
   .middleware([authMiddleware])

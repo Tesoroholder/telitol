@@ -23,7 +23,7 @@ export const getMyRole = createServerFn({ method: "GET" })
     getRole(await getSql(), context.userId),
   );
 
-/** Report a question or answer. */
+/** Report a question, an answer, or an AI reply in your own chat. */
 export const reportContent = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -34,8 +34,8 @@ export const reportContent = createServerFn({ method: "POST" })
       details?: string;
     }) => ({
       targetType:
-        input?.targetType === "answer"
-          ? ("answer" as const)
+        input?.targetType === "answer" || input?.targetType === "ai_message"
+          ? input.targetType
           : ("question" as const),
       targetId: Number(input?.targetId),
       reason: isReportReason(input?.reason) ? input.reason : "other",
@@ -82,7 +82,9 @@ export const resolveReport = createServerFn({ method: "POST" })
       note?: string;
     }): Omit<ResolveInput, "moderatorId"> => ({
       targetType:
-        input?.targetType === "answer" || input?.targetType === "connect_room"
+        input?.targetType === "answer" ||
+        input?.targetType === "connect_room" ||
+        input?.targetType === "ai_message"
           ? input.targetType
           : "question",
       targetId: typeof input?.targetId === "string" ? input.targetId : "",

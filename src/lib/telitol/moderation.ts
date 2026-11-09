@@ -1,4 +1,5 @@
 import type { Sql } from "../db.ts";
+import { AI_AUTHOR_ID } from "./account.ts";
 import { notify } from "./notifications.ts";
 
 /**
@@ -16,7 +17,7 @@ export const REPORT_REASONS = [
   "other",
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
-export type ReportTarget = "question" | "answer" | "connect_room";
+export type ReportTarget = "question" | "answer" | "connect_room" | "ai_message";
 export type Role = "member" | "moderator" | "admin";
 
 /** Distinct reporters needed before a question or answer is hidden automatically. */
@@ -91,6 +92,14 @@ async function targetOwner(
     }>`select user_id from answers where id = ${Number(id)}`;
     return rows[0]?.user_id ?? null;
   }
+  if (type === "ai_message") {
+    // Only the person in the chat can report an AI reply in it.
+    const rows = await sql<{ id: number }>`
+      select id from laya_messages
+      where id = ${Number(id)} and user_id = ${reporterId} and role = 'assistant'
+    `;
+    return rows[0] ? AI_AUTHOR_ID : null;
+  }
   // A Connect room: only its two participants can report it, and the target is the other one.
   const rows = await sql<{ user_a: string; user_b: string }>`
     select user_a, user_b from connect_rooms where id = ${id}
@@ -136,7 +145,9 @@ export async function fileReport(
             ${input.reason}, ${input.details.slice(0, 1000)})
     on conflict (reporter_id, target_type, target_id) do nothing
   `;
-  if (input.targetType === "connect_room") return { ok: true, hidden: false };
+  // Only public posts are auto-hidden; chats and AI replies wait for a moderator.
+  if (input.targetType === "connect_room" || input.targetType === "ai_message")
+    return { ok: true, hidden: false };
 
   const counted = await sql<{ n: number }>`
     select count(distinct reporter_id)::int as n from reports
@@ -198,6 +209,7 @@ export async function listOpenReports(sql: Sql): Promise<ReportGroup[]> {
       case r.target_type
         when 'question' then (select q.title || E'\n\n' || q.body from questions q where q.id::text = r.target_id)
         when 'answer' then (select a.body from answers a where a.id::text = r.target_id)
+        when 'ai_message' then (select m.content from laya_messages m where m.id::text = r.target_id)
         else (
           select string_agg(m.body, E'\n' order by m.id)
           from (select body, id from connect_messages
@@ -228,7 +240,8 @@ export async function listOpenReports(sql: Sql): Promise<ReportGroup[]> {
     targetType: row.target_type,
     targetId: row.target_id,
     targetUserId: row.target_user_id,
-    authorName: row.author_name ?? "Member",
+    authorName:
+      row.target_type === "ai_message" ? "TeliTol AI" : row.author_name ?? "Member",
     reportCount: Number(row.report_count),
     reasons: row.reasons ?? [],
     details: row.details ?? [],
@@ -284,8 +297,13 @@ export async function resolveReports(
     where target_type = ${targetType} and target_id = ${targetId} and status = 'open'
     returning target_user_id
   `;
-  const owner = owners[0]?.target_user_id;
-  const days = Math.max(0, Math.min(365, Math.floor(input.suspendDays)));
+  // AI replies have no member behind them to suspend or notify.
+  const owner =
+    targetType === "ai_message" ? undefined : owners[0]?.target_user_id;
+  const days =
+    targetType === "ai_message"
+      ? 0
+      : Math.max(0, Math.min(365, Math.floor(input.suspendDays)));
   if (owner && days > 0) {
     await tx`
       insert into profiles (user_id, display_name, suspended_until)

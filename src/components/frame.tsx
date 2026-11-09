@@ -120,6 +120,8 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 const RECOVERY_PATHS = new Set(["/forgot-password", "/reset-password"]);
+/** Pages anyone can open signed in or out (Google Play links to these). */
+const PUBLIC_PATHS = new Set(["/privacy", "/terms", "/delete-account"]);
 
 export function Frame() {
   const [mounted, setMounted] = useState(false);
@@ -130,6 +132,8 @@ export function Frame() {
     setMounted(true);
   }, []);
 
+  // Legal pages render on the server too, so crawlers and reviewers see the text.
+  if (PUBLIC_PATHS.has(path)) return <Outlet />;
   if (!mounted || isPending) return <BootScreen />;
   // Password recovery pages work whether or not someone is signed in.
   if (RECOVERY_PATHS.has(path)) return <Outlet />;

@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { UserButton } from "@/components/user-button";
+import { DeleteAccount } from "@/components/delete-account";
+import { LegalLinks } from "@/components/public-page";
 import { ErrorNote, PrimaryButton, TextField } from "@/components/fields";
 import { getProfile, updateProfile } from "@/lib/telitol/server";
 import { getMyRole } from "@/lib/telitol/moderation-server";
@@ -177,6 +179,10 @@ function ProfilePage() {
       <div className="rounded-3xl border border-line bg-card p-4">
         <UserButton />
       </div>
+
+      <DeleteAccount />
+
+      <LegalLinks className="pb-2" />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
 const REASONS = [
   { id: "spam", label: "Spam or ads" },
@@ -25,6 +25,8 @@ export function ReportButton({
   const [details, setDetails] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  // Several report forms can be open on one page (e.g. under each AI reply).
+  const selectId = useId();
 
   if (message) return <p className="text-sm text-muted">{message}</p>;
 
@@ -56,11 +58,11 @@ export function ReportButton({
 
   return (
     <div className="w-full space-y-2 rounded-2xl border border-line bg-card p-3">
-      <label className="block text-sm font-semibold" htmlFor="report-reason">
+      <label className="block text-sm font-semibold" htmlFor={selectId}>
         What's wrong?
       </label>
       <select
-        id="report-reason"
+        id={selectId}
         value={reason}
         onChange={(event) => setReason(event.target.value)}
         className="h-10 w-full rounded-lg border border-line bg-card px-2 text-sm"

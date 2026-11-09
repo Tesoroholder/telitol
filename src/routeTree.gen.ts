@@ -15,6 +15,9 @@ import { Route as AskRouteImport } from './routes/ask'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LayaRouteImport } from './routes/laya'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ModRouteImport } from './routes/mod'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -51,6 +54,21 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const LayaRoute = LayaRouteImport.update({
   id: '/laya',
   path: '/laya',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -96,6 +114,9 @@ export interface FileRoutesByFullPath {
   '/connect': typeof ConnectRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/laya': typeof LayaRoute
+  '/delete-account': typeof DeleteAccountRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/login': typeof LoginRoute
   '/mod': typeof ModRoute
   '/notifications': typeof NotificationsRoute
@@ -111,6 +132,9 @@ export interface FileRoutesByTo {
   '/connect': typeof ConnectRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/laya': typeof LayaRoute
+  '/delete-account': typeof DeleteAccountRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/login': typeof LoginRoute
   '/mod': typeof ModRoute
   '/notifications': typeof NotificationsRoute
@@ -127,6 +151,9 @@ export interface FileRoutesById {
   '/connect': typeof ConnectRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/laya': typeof LayaRoute
+  '/delete-account': typeof DeleteAccountRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/login': typeof LoginRoute
   '/mod': typeof ModRoute
   '/notifications': typeof NotificationsRoute
@@ -144,6 +171,9 @@ export interface FileRouteTypes {
     | '/connect'
     | '/forgot-password'
     | '/laya'
+    | '/delete-account'
+    | '/privacy'
+    | '/terms'
     | '/login'
     | '/mod'
     | '/notifications'
@@ -159,6 +189,9 @@ export interface FileRouteTypes {
     | '/connect'
     | '/forgot-password'
     | '/laya'
+    | '/delete-account'
+    | '/privacy'
+    | '/terms'
     | '/login'
     | '/mod'
     | '/notifications'
@@ -174,6 +207,9 @@ export interface FileRouteTypes {
     | '/connect'
     | '/forgot-password'
     | '/laya'
+    | '/delete-account'
+    | '/privacy'
+    | '/terms'
     | '/login'
     | '/mod'
     | '/notifications'
@@ -190,6 +226,9 @@ export interface RootRouteChildren {
   ConnectRoute: typeof ConnectRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LayaRoute: typeof LayaRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   LoginRoute: typeof LoginRoute
   ModRoute: typeof ModRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -241,6 +280,27 @@ declare module '@tanstack/react-router' {
       path: '/laya'
       fullPath: '/laya'
       preLoaderRoute: typeof LayaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -302,6 +362,9 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectRoute: ConnectRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LayaRoute: LayaRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   LoginRoute: LoginRoute,
   ModRoute: ModRoute,
   NotificationsRoute: NotificationsRoute,

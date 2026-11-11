@@ -1,5 +1,10 @@
 import type { Sql } from "../db.ts";
-import type { QuestionCard, QuestionKind, QuestionPage } from "./shared.ts";
+import {
+  isCategory,
+  type QuestionCard,
+  type QuestionKind,
+  type QuestionPage,
+} from "./shared.ts";
 
 /**
  * Question queries shared by the server functions. Kept free of server-function
@@ -24,7 +29,9 @@ export type QuestionRow = {
   reputation: number;
   answer_count: number;
   is_mine: unknown;
+  is_hidden: unknown;
   created_at: string;
+  edited_at: string | null;
 };
 
 export function mapQuestion(row: QuestionRow): QuestionCard {
@@ -38,7 +45,9 @@ export function mapQuestion(row: QuestionRow): QuestionCard {
     reputation: Number(row.reputation ?? 0),
     answerCount: Number(row.answer_count ?? 0),
     isMine: asBool(row.is_mine),
+    hidden: asBool(row.is_hidden),
     createdAt: row.created_at,
+    editedAt: row.edited_at ?? null,
   };
 }
 
@@ -52,8 +61,10 @@ export const QUESTION_SELECT = `
   coalesce(p.display_name, q.author_name) as author_name,
   coalesce(p.reputation, 0) as reputation,
   (q.user_id = $UID) as is_mine,
+  (q.hidden_at is not null) as is_hidden,
   (select count(*)::int from answers a where a.question_id = q.id and a.hidden_at is null) as answer_count,
-  to_char(q.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at
+  to_char(q.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+  to_char(q.edited_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as edited_at
 `;
 
 export const PAGE_SIZE = 20;
@@ -190,4 +201,64 @@ export async function fetchQuestionPage(
           : null
         : `${last.sort_micros}:${last.id}`,
   };
+}
+
+export type QuestionInput = {
+  title: string;
+  body: string;
+  category: string;
+  kind: string;
+};
+
+/** Rules for a question's text, shared by posting and editing. Null when valid. */
+export function validateQuestion(input: QuestionInput): string | null {
+  if (input.title.length < 8)
+    return "Give the question a title of at least 8 characters.";
+  if (input.title.length > 140) return "Keep the title under 140 characters.";
+  if (input.body.length < 20)
+    return "Add a little more detail so people know how to answer.";
+  if (input.body.length > 4000)
+    return "That is too long. Keep it under 4000 characters.";
+  if (!isCategory(input.category)) return "Pick a category.";
+  if (input.kind !== "knowledge" && input.kind !== "experience")
+    return "Choose experience or knowledge.";
+  return null;
+}
+
+/**
+ * Edit your own question, any time after posting. Answers stay; readers see
+ * "Edited". Questions hidden by moderators can't be edited until reviewed, so
+ * an edit can't be used to slip past a report.
+ */
+export async function updateOwnQuestion(
+  sql: Sql,
+  userId: string,
+  id: number,
+  input: QuestionInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!Number.isInteger(id) || id <= 0)
+    return { ok: false, error: "That question is missing." };
+  const invalid = validateQuestion(input);
+  if (invalid) return { ok: false, error: invalid };
+  const rows = await sql<{ user_id: string; is_hidden: unknown }>`
+    select user_id, (hidden_at is not null) as is_hidden from questions where id = ${id}
+  `;
+  const current = rows[0];
+  if (!current || current.user_id !== userId)
+    return { ok: false, error: "You can only edit your own question." };
+  if (asBool(current.is_hidden))
+    return {
+      ok: false,
+      error: "This question is hidden while a moderator reviews it, so it can't be edited yet.",
+    };
+  await sql`
+    update questions
+    set title = ${input.title},
+        body = ${input.body},
+        category = ${input.category},
+        kind = ${input.kind},
+        edited_at = now()
+    where id = ${id} and user_id = ${userId}
+  `;
+  return { ok: true };
 }

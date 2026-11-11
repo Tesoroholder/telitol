@@ -18,6 +18,8 @@ import {
   fetchQuestionPage,
   mapQuestion,
   QUESTION_SELECT,
+  updateOwnQuestion,
+  validateQuestion,
   type QuestionRow,
 } from "@/lib/telitol/questions";
 import { suspensionMessage } from "@/lib/telitol/moderation";
@@ -138,17 +140,21 @@ export const getProfile = createServerFn({ method: "GET" })
       id: number;
       title: string;
       answer_count: number;
+      is_hidden: unknown;
       created_at: string;
+      edited_at: string | null;
     }>`
       select
         q.id,
         q.title,
         (select count(*)::int from answers a where a.question_id = q.id) as answer_count,
-        to_char(q.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at
+        (q.hidden_at is not null) as is_hidden,
+        to_char(q.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+        to_char(q.edited_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as edited_at
       from questions q
       where q.user_id = ${context.userId}
       order by q.created_at desc
-      limit 30
+      limit 100
     `;
     const answers = await sql<{
       id: number;
@@ -175,7 +181,9 @@ export const getProfile = createServerFn({ method: "GET" })
       id: Number(row.id),
       title: row.title,
       answerCount: Number(row.answer_count ?? 0),
+      hidden: asBool(row.is_hidden),
       createdAt: row.created_at,
+      editedAt: row.edited_at ?? null,
     }));
     const mineAnswers: MineAnswer[] = answers.map((row) => ({
       id: Number(row.id),
@@ -329,28 +337,8 @@ export const createQuestion = createServerFn({ method: "POST" })
   )
   .handler(
     async ({ context, data }): Promise<{ ok: true; id: number } | Err> => {
-      if (data.title.length < 8)
-        return {
-          ok: false,
-          error: "Give the question a title of at least 8 characters.",
-        };
-      if (data.title.length > 140)
-        return { ok: false, error: "Keep the title under 140 characters." };
-      if (data.body.length < 20)
-        return {
-          ok: false,
-          error: "Add a little more detail so people know how to answer.",
-        };
-      if (data.body.length > 4000)
-        return {
-          ok: false,
-          error: "That is too long. Keep it under 4000 characters.",
-        };
-      if (!isCategory(data.category))
-        return { ok: false, error: "Pick a category." };
-      if (data.kind !== "knowledge" && data.kind !== "experience") {
-        return { ok: false, error: "Choose experience or knowledge." };
-      }
+      const invalid = validateQuestion(data);
+      if (invalid) return { ok: false, error: invalid };
       const sql = await getSql();
       const suspended = await suspensionMessage(sql, context.userId);
       if (suspended) return { ok: false, error: suspended };
@@ -546,6 +534,34 @@ export const acceptAnswer = createServerFn({ method: "POST" })
       }
     });
     return { ok: true };
+  });
+
+/** Edit your own question's title, text, category or kind, at any time. */
+export const updateQuestion = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (input: {
+      id?: number;
+      title?: string;
+      body?: string;
+      category?: string;
+      kind?: string;
+    }) => ({
+      id: Number(input?.id),
+      title: typeof input?.title === "string" ? input.title.trim() : "",
+      body: typeof input?.body === "string" ? input.body.trim() : "",
+      category: typeof input?.category === "string" ? input.category : "",
+      kind: typeof input?.kind === "string" ? input.kind : "",
+    }),
+  )
+  .handler(async ({ context, data }): Promise<{ ok: true } | Err> => {
+    const sql = await getSql();
+    const suspended = await suspensionMessage(sql, context.userId);
+    if (suspended) return { ok: false, error: suspended };
+    if (!(await allowAction(sql, "questionEdit", context.userId)))
+      return { ok: false, error: SLOW_DOWN };
+    const { id, ...input } = data;
+    return updateOwnQuestion(sql, context.userId, id, input);
   });
 
 export const deleteQuestion = createServerFn({ method: "POST" })

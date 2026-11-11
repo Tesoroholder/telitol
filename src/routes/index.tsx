@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { listQuestions } from "@/lib/telitol/server";
+import { WelcomeBanner } from "@/components/welcome-banner";
 import {
   CATEGORIES,
   categoryLabel,
@@ -76,6 +77,7 @@ function HomePage() {
 
   return (
     <div className="space-y-5">
+      <WelcomeBanner />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           Ask a person, or ask AI.

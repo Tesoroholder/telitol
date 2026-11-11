@@ -99,42 +99,46 @@ function ProfilePage() {
         </section>
       ) : null}
 
-      <form className="space-y-3" onSubmit={(event) => void save(event)}>
-        <TextField
-          label="Name on your posts"
-          value={name}
-          maxLength={40}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <ErrorNote message={error} />
-        {saved ? (
-          <p className="text-sm font-medium text-green">{saved}</p>
-        ) : null}
-        <PrimaryButton type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save name"}
-        </PrimaryButton>
-      </form>
-
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Your questions</h2>
         {profile && profile.questions.length === 0 ? (
-          <p className="text-sm text-muted">You haven't asked yet.</p>
+          <p className="text-sm text-muted">
+            You haven't asked yet.{" "}
+            <Link to="/ask" className="font-semibold text-green hover:underline">
+              Ask a person
+            </Link>
+          </p>
         ) : null}
         <ul className="space-y-2">
           {profile?.questions.map((question) => (
-            <li key={question.id}>
+            <li
+              key={question.id}
+              className="flex items-start gap-3 rounded-2xl border border-line bg-card px-4 py-3"
+            >
               <Link
                 to="/q/$id"
                 params={{ id: String(question.id) }}
-                className="block rounded-2xl border border-line bg-card px-4 py-3"
+                className="min-w-0 flex-1"
               >
                 <p className="font-medium">{question.title}</p>
                 <p className="mt-1 text-sm text-muted">
                   {question.answerCount}{" "}
                   {question.answerCount === 1 ? "answer" : "answers"} ·{" "}
                   {formatWhen(question.createdAt)}
+                  {question.editedAt ? " · Edited" : ""}
+                  {question.hidden ? " · Hidden for review" : ""}
                 </p>
               </Link>
+              {!question.hidden ? (
+                <Link
+                  to="/q/$id"
+                  params={{ id: String(question.id) }}
+                  hash="edit"
+                  className="shrink-0 text-sm font-semibold text-green hover:underline"
+                >
+                  Edit
+                </Link>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -166,6 +170,22 @@ function ProfilePage() {
           ))}
         </ul>
       </section>
+
+      <form className="space-y-3" onSubmit={(event) => void save(event)}>
+        <TextField
+          label="Name on your posts"
+          value={name}
+          maxLength={40}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <ErrorNote message={error} />
+        {saved ? (
+          <p className="text-sm font-medium text-green">{saved}</p>
+        ) : null}
+        <PrimaryButton type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save name"}
+        </PrimaryButton>
+      </form>
 
       {isModerator ? (
         <Link

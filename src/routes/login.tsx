@@ -12,6 +12,7 @@ import {
 import { LogoMark, Wordmark } from "@/components/logo";
 import { LegalLinks } from "@/components/public-page";
 import { MIN_AGE } from "@/lib/telitol/legal";
+import { rememberWelcome } from "@/components/welcome-banner";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 
@@ -29,6 +30,7 @@ function LoginPage() {
   const [social, setSocial] = useState<SocialProvider[]>([]);
   const [canReset, setCanReset] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     void getAuthOptions()
@@ -95,6 +97,8 @@ function LoginPage() {
             : result.error.message || fallback,
         );
       } else {
+        // The home page reads this once to confirm the new account.
+        if (mode === "up") rememberWelcome(name.trim());
         window.location.href = "/";
       }
     } catch (caught) {
@@ -198,12 +202,24 @@ function LoginPage() {
             />
             <TextField
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete={mode === "up" ? "new-password" : "current-password"}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="At least 8 characters"
             />
+            <label className="-mt-2 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showPassword}
+                onChange={(event) => setShowPassword(event.target.checked)}
+                className="size-4 accent-green"
+              />
+              Show password
+            </label>
             {mode === "up" ? (
               <label className="flex items-start gap-3 text-sm">
                 <input
@@ -239,7 +255,9 @@ function LoginPage() {
             <ErrorNote message={error} />
             <PrimaryButton type="submit" className="w-full" disabled={pending}>
               {pending
-                ? "One moment…"
+                ? mode === "up"
+                  ? "Creating your account…"
+                  : "Signing in…"
                 : mode === "up"
                   ? "Create account"
                   : "Sign in"}

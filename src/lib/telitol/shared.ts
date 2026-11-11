@@ -59,7 +59,11 @@ export type QuestionCard = {
   reputation: number;
   answerCount: number;
   isMine: boolean;
+  /** Hidden by moderators; only the asker still sees it. */
+  hidden: boolean;
   createdAt: string;
+  /** When the asker last edited it, or null. */
+  editedAt: string | null;
 };
 
 export type QuestionPage = {
@@ -95,7 +99,9 @@ export type MineQuestion = {
   id: number;
   title: string;
   answerCount: number;
+  hidden: boolean;
   createdAt: string;
+  editedAt: string | null;
 };
 
 export type MineAnswer = {

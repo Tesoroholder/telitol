@@ -12,13 +12,16 @@ import {
   createAnswer,
   deleteQuestion,
   getQuestion,
+  updateQuestion,
   voteHelpful,
 } from "@/lib/telitol/server";
+import { QuestionForm } from "@/components/question-form";
 import { reportContent } from "@/lib/telitol/moderation-server";
 import { ReportButton } from "@/components/report-button";
 import {
   categoryLabel,
   formatWhen,
+  isCategory,
   kindLabel,
   type AnswerCard,
   type QuestionCard,
@@ -37,6 +40,8 @@ function QuestionPage() {
   const [body, setBody] = useState("");
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -52,6 +57,13 @@ function QuestionPage() {
         }
         setQuestion(detail.question);
         setAnswers(detail.answers);
+        // Links from "Your questions" (#edit) and from posting (#posted).
+        const hash = window.location.hash;
+        if (hash === "#edit" && detail.question.isMine) setEditing(true);
+        if (hash === "#posted")
+          setNotice(
+            "Your question is posted. Find it any time under You → Your questions, where you can also edit it.",
+          );
       })
       .catch(() => {
         if (live) setError("Couldn't load this question.");
@@ -125,6 +137,25 @@ function QuestionPage() {
     );
   }
 
+  async function onSaveEdit(draft: {
+    title: string;
+    body: string;
+    category: string;
+    kind: string;
+  }) {
+    if (!question) return { ok: false as const, error: "That question is missing." };
+    const result = await updateQuestion({ data: { id: question.id, ...draft } });
+    if (!result.ok) return result;
+    const detail = await getQuestion({ data: { id: question.id } });
+    if (detail) {
+      setQuestion(detail.question);
+      setAnswers(detail.answers);
+    }
+    setEditing(false);
+    setNotice("Your changes are saved.");
+    return result;
+  }
+
   async function onDelete() {
     if (!question) return;
     setPending(true);
@@ -170,6 +201,44 @@ function QuestionPage() {
       <Link to="/" className="text-sm font-semibold text-green">
         Back
       </Link>
+      {notice ? (
+        <p
+          role="status"
+          className="rounded-2xl border border-green bg-mint px-4 py-3 text-sm font-medium"
+        >
+          {notice}
+        </p>
+      ) : null}
+      {question.isMine && question.hidden ? (
+        <p className="rounded-2xl border border-line bg-card px-4 py-3 text-sm text-muted">
+          This question is hidden while a moderator reviews a report. Only you
+          can see it, and it can't be edited until the review is done.
+        </p>
+      ) : null}
+      {editing ? (
+        <section className="space-y-3 rounded-3xl border border-line bg-card p-4">
+          <h1 className="text-lg font-semibold">Edit your question</h1>
+          <p className="text-sm text-muted">
+            Answers stay where they are. Readers will see that you edited it.
+          </p>
+          <QuestionForm
+            initial={{
+              title: question.title,
+              body: question.body,
+              category: isCategory(question.category) ? question.category : "",
+              kind: question.kind,
+            }}
+            submitLabel="Save changes"
+            pendingLabel="Saving…"
+            onSubmit={onSaveEdit}
+            extraActions={
+              <SecondaryButton onClick={() => setEditing(false)}>
+                Cancel
+              </SecondaryButton>
+            }
+          />
+        </section>
+      ) : (
       <article className="space-y-3">
         <p className="text-sm text-muted">
           <span
@@ -193,6 +262,9 @@ function QuestionPage() {
             <span className="tabular-nums"> · {question.reputation} pts</span>
           ) : null}
           <span> · {formatWhen(question.createdAt)}</span>
+          {question.editedAt ? (
+            <span title={`Edited ${formatWhen(question.editedAt)}`}> · Edited</span>
+          ) : null}
         </p>
         {question.category === "health" ? (
           <p className="text-sm text-muted">
@@ -229,17 +301,32 @@ function QuestionPage() {
                 </SecondaryButton>
               </div>
             ) : (
-              <button
-                type="button"
-                className="text-sm font-medium text-muted"
-                onClick={() => setConfirmDelete(true)}
-              >
-                Delete question
-              </button>
+              <div className="flex flex-wrap gap-4">
+                {!question.hidden ? (
+                  <button
+                    type="button"
+                    className="text-sm font-semibold text-green hover:underline"
+                    onClick={() => {
+                      setNotice("");
+                      setEditing(true);
+                    }}
+                  >
+                    Edit question
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="text-sm font-medium text-muted"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  Delete question
+                </button>
+              </div>
             )}
           </div>
         ) : null}
       </article>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">

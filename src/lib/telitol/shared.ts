@@ -66,6 +66,8 @@ export type QuestionCard = {
   editedAt: string | null;
   /** Photos attached to the question, in order. */
   images: ImageRef[];
+  /** Documents, audio and video attached to the question, in order. */
+  files: Attachment[];
   /** The asker's profile photo URL, or null. */
   authorAvatar: string | null;
 };
@@ -85,6 +87,21 @@ export type ImageRef = {
   height: number;
 };
 
+/** A file attached to a post: a document, an audio clip or a video. */
+export type Attachment = {
+  /** Present on files the viewer can re-attach (their own, when editing). */
+  id?: number;
+  url: string;
+  /** The file name as uploaded, e.g. "CV.pdf". */
+  name: string;
+  contentType: string;
+  kind: "document" | "audio" | "video";
+  bytes: number;
+};
+
+/** A file the member just uploaded, ready to attach. */
+export type UploadedAttachment = Attachment & { id: number };
+
 /** A photo the member just uploaded, ready to attach to a post. */
 export type UploadedImage = ImageRef & { id: number };
 
@@ -98,6 +115,7 @@ export type AnswerCard = {
   voted: boolean;
   createdAt: string;
   images: ImageRef[];
+  files: Attachment[];
   /** The author's profile photo URL, or null. */
   authorAvatar: string | null;
 };
@@ -106,6 +124,8 @@ export type AiMessage = {
   id: number;
   role: "user" | "assistant";
   content: string;
+  /** A document attached to the question, or null. */
+  file: Attachment | null;
 };
 
 export type AiThread = {

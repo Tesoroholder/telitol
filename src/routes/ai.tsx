@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ErrorNote, PrimaryButton } from "@/components/fields";
 import { ModeSwitch } from "@/components/mode-switch";
+import { AttachmentPicker, FileChip } from "@/components/attachments";
 import { ReportButton } from "@/components/report-button";
 import { askAi, getAiThread, listAiThreads } from "@/lib/telitol/server";
 import { reportContent } from "@/lib/telitol/moderation-server";
-import type { AiMessage, AiThread } from "@/lib/telitol/shared";
+import type { AiMessage, AiThread, UploadedAttachment } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/ai")({ component: AiPage });
 
@@ -22,6 +23,7 @@ function AiPage() {
   const [title, setTitle] = useState("");
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [prompt, setPrompt] = useState("");
+  const [files, setFiles] = useState<UploadedAttachment[]>([]);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
@@ -80,6 +82,7 @@ function AiPage() {
     setTitle("");
     setMessages([]);
     setPrompt("");
+    setFiles([]);
     setError("");
   }
 
@@ -87,12 +90,17 @@ function AiPage() {
     const next = text.trim();
     if (next.length < 2 || pending) return;
     setError("");
+    const attached = files;
     setPending(true);
     setPrompt("");
+    setFiles([]);
     try {
-      const result = await askAi({ data: { threadId, prompt: next } });
+      const result = await askAi({
+        data: { threadId, prompt: next, attachmentId: attached[0]?.id ?? null },
+      });
       if (!result.ok) {
         setPrompt(next);
+        setFiles(attached);
         setError(result.error);
         return;
       }
@@ -112,6 +120,7 @@ function AiPage() {
       });
     } catch {
       setPrompt(next);
+      setFiles(attached);
       setError("AI couldn't answer just now. Try again.");
     } finally {
       setPending(false);
@@ -195,6 +204,11 @@ function AiPage() {
             >
               {message.role === "user" ? "You" : "AI"}
             </p>
+            {message.file ? (
+              <div className="mb-2 flex text-ink">
+                <FileChip file={message.file} />
+              </div>
+            ) : null}
             <p className="whitespace-pre-wrap">{message.content}</p>
             {message.role === "assistant" ? (
               <div className="mt-2">
@@ -252,8 +266,15 @@ function AiPage() {
               void send(prompt);
             }
           }}
-          placeholder="Ask AI…"
+          placeholder={files.length > 0 ? "What should AI do with this file?" : "Ask AI…"}
           className="w-full resize-y rounded-lg border border-line bg-card px-3 py-3 text-base outline-none placeholder:text-muted focus-visible:border-green"
+        />
+        <AttachmentPicker
+          purpose="ai"
+          value={files}
+          onChange={setFiles}
+          max={1}
+          label="Attach a document"
         />
         <ErrorNote message={error} />
         <PrimaryButton

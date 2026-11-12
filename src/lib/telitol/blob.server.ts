@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { env } from "@/lib/env.server";
 
 /**
@@ -77,4 +78,72 @@ export async function deleteBlobs(urls: string[]): Promise<void> {
       console.error("[blob] delete failed:", err);
     }
   }
+}
+
+/**
+ * A short-lived pass that lets the browser upload one file straight to
+ * storage (large videos can't go through our server). It only works for this
+ * exact pathname, this content type and up to this size. Same format as
+ * @vercel/blob's generateClientTokenFromReadWriteToken.
+ */
+export function createUploadToken(options: {
+  pathname: string;
+  contentType: string;
+  maximumSizeInBytes: number;
+  validForMinutes?: number;
+}): { token: string; storeId: string; apiVersion: string } | null {
+  const rw = token();
+  if (!rw) return null;
+  const storeId = rw.split("_")[3] ?? "";
+  const payload = Buffer.from(
+    JSON.stringify({
+      pathname: options.pathname,
+      allowedContentTypes: [options.contentType],
+      maximumSizeInBytes: options.maximumSizeInBytes,
+      addRandomSuffix: false,
+      allowOverwrite: false,
+      cacheControlMaxAge: 31536000,
+      validUntil: Date.now() + (options.validForMinutes ?? 30) * 60_000,
+    }),
+  ).toString("base64");
+  const signature = createHmac("sha256", rw).update(payload).digest("hex");
+  return {
+    token: `vercel_blob_client_${storeId}_${Buffer.from(`${signature}.${payload}`).toString("base64")}`,
+    storeId,
+    apiVersion: API_VERSION,
+  };
+}
+
+/** Facts storage holds about an uploaded file, or null if it isn't there. */
+export async function headBlob(
+  url: string,
+): Promise<{ url: string; pathname: string; size: number; contentType: string } | null> {
+  const rw = token();
+  if (!rw) return null;
+  const res = await fetch(`${API_URL}/?${new URLSearchParams({ url })}`, {
+    method: "GET",
+    headers: headers(rw),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    url?: string;
+    pathname?: string;
+    size?: number;
+    contentType?: string;
+  };
+  if (!data.url || !data.pathname) return null;
+  return {
+    url: data.url,
+    pathname: data.pathname,
+    size: Number(data.size ?? 0),
+    contentType: data.contentType ?? "",
+  };
+}
+
+/** Download up to `maxBytes` of a stored file (its first bytes when `maxBytes` is small). */
+export async function readBlob(url: string, maxBytes: number): Promise<Uint8Array> {
+  const res = await fetch(url, { headers: { range: `bytes=0-${maxBytes - 1}` } });
+  if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
+  const body = new Uint8Array(await res.arrayBuffer());
+  return body.length > maxBytes ? body.slice(0, maxBytes) : body;
 }

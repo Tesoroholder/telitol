@@ -49,6 +49,11 @@ function TermsPage() {
           partner stay hidden until you choose to view them.
         </li>
         <li>
+          Attach files you don't have the right to share, such as someone
+          else's private documents, paid books or exam papers, or recordings
+          made without permission, or files meant to harm devices.
+        </li>
+        <li>
           Post spam, ads, scams or links meant to trick people, or try to
           break or overload TeliTol.
         </li>

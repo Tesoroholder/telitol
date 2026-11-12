@@ -15,7 +15,8 @@ import {
   updateQuestion,
   voteHelpful,
 } from "@/lib/telitol/server";
-import { QuestionForm } from "@/components/question-form";
+import { QuestionForm, type QuestionDraft } from "@/components/question-form";
+import { Avatar, PhotoGallery, PhotoPicker } from "@/components/photos";
 import { reportContent } from "@/lib/telitol/moderation-server";
 import { ReportButton } from "@/components/report-button";
 import {
@@ -25,6 +26,7 @@ import {
   kindLabel,
   type AnswerCard,
   type QuestionCard,
+  type UploadedImage,
 } from "@/lib/telitol/shared";
 
 export const Route = createFileRoute("/q/$id")({ component: QuestionPage });
@@ -38,6 +40,7 @@ function QuestionPage() {
   const [missing, setMissing] = useState(false);
   const [error, setError] = useState("");
   const [body, setBody] = useState("");
+  const [answerImages, setAnswerImages] = useState<UploadedImage[]>([]);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -84,6 +87,7 @@ function QuestionPage() {
           questionId: question.id,
           body,
           displayName: user?.displayName ?? "",
+          imageIds: answerImages.map((image) => image.id),
         },
       });
       if (!result.ok) {
@@ -96,6 +100,7 @@ function QuestionPage() {
         setAnswers(detail.answers);
       }
       setBody("");
+      setAnswerImages([]);
     } catch {
       setError("Couldn't post that answer.");
     } finally {
@@ -137,14 +142,12 @@ function QuestionPage() {
     );
   }
 
-  async function onSaveEdit(draft: {
-    title: string;
-    body: string;
-    category: string;
-    kind: string;
-  }) {
+  async function onSaveEdit(draft: QuestionDraft) {
     if (!question) return { ok: false as const, error: "That question is missing." };
-    const result = await updateQuestion({ data: { id: question.id, ...draft } });
+    const { images, ...fields } = draft;
+    const result = await updateQuestion({
+      data: { id: question.id, ...fields, imageIds: images.map((image) => image.id) },
+    });
     if (!result.ok) return result;
     const detail = await getQuestion({ data: { id: question.id } });
     if (detail) {
@@ -227,6 +230,10 @@ function QuestionPage() {
               body: question.body,
               category: isCategory(question.category) ? question.category : "",
               kind: question.kind,
+              // Photos already on the question, kept unless removed.
+              images: question.images.flatMap((image) =>
+                image.id ? [{ ...image, id: image.id }] : [],
+              ),
             }}
             submitLabel="Save changes"
             pendingLabel="Saving…"
@@ -256,7 +263,9 @@ function QuestionPage() {
           {question.title}
         </h1>
         <p className="whitespace-pre-wrap text-base">{question.body}</p>
-        <p className="text-sm text-muted">
+        <PhotoGallery images={question.images} />
+        <p className="flex flex-wrap items-center gap-x-1 text-sm text-muted">
+          <Avatar url={question.authorAvatar} name={question.authorName} size={24} />
           <span className="font-medium text-ink">{question.authorName}</span>
           {question.reputation > 0 ? (
             <span className="tabular-nums"> · {question.reputation} pts</span>
@@ -344,7 +353,8 @@ function QuestionPage() {
               className={`rounded-3xl border p-4 ${answer.isBest ? "border-green bg-mint" : "border-line bg-card"}`}
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm">
+                <p className="flex items-center gap-2 text-sm">
+                  <Avatar url={answer.authorAvatar} name={answer.authorName} />
                   <span className="font-semibold">{answer.authorName}</span>
                   <span className="text-muted">
                     {" "}
@@ -360,6 +370,11 @@ function QuestionPage() {
               <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
                 {answer.body}
               </p>
+              {answer.images.length > 0 ? (
+                <div className="mt-3">
+                  <PhotoGallery images={answer.images} />
+                </div>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {answer.isMine ? (
                   <span className="text-sm text-muted">Your answer</span>
@@ -408,6 +423,12 @@ function QuestionPage() {
           maxLength={4000}
           onChange={(event) => setBody(event.target.value)}
           placeholder="What you lived, or what you know. Be specific."
+        />
+        <PhotoPicker
+          purpose="answer"
+          value={answerImages}
+          onChange={setAnswerImages}
+          max={2}
         />
         <ErrorNote message={question ? error : ""} />
         <PrimaryButton type="submit" disabled={pending}>

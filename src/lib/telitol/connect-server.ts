@@ -20,6 +20,8 @@ import {
 } from "@/lib/telitol/moderation";
 import { allowAction, SLOW_DOWN } from "@/lib/telitol/rate-limit";
 import { isCategory } from "@/lib/telitol/shared";
+import { sweepOrphanImages } from "@/lib/telitol/images";
+import { deleteBlobs } from "@/lib/telitol/blob.server";
 
 type Err = { ok: false; error: string };
 
@@ -58,6 +60,8 @@ export const joinConnect = createServerFn({ method: "POST" })
       if (!(await allowAction(sql, "connectJoin", context.userId)))
         return { ok: false, error: SLOW_DOWN };
       await purgeOld(sql);
+      // Photos from expired chats (and other unused uploads) go with them.
+      void sweepOrphanImages(sql, 20).then(deleteBlobs).catch(() => {});
       const result = await withTransaction((tx) =>
         joinQueue(tx, context.userId, data.topic),
       );
@@ -86,9 +90,13 @@ export const leaveConnect = createServerFn({ method: "POST" })
 
 export const sendConnectMessage = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { roomId?: string; body?: string }) => ({
+  .validator((input: { roomId?: string; body?: string; imageId?: number | null }) => ({
     roomId: typeof input?.roomId === "string" ? input.roomId : "",
     body: typeof input?.body === "string" ? input.body : "",
+    imageId:
+      Number.isInteger(input?.imageId) && Number(input?.imageId) > 0
+        ? Number(input?.imageId)
+        : null,
   }))
   .handler(async ({ context, data }): Promise<SendResult> => {
     const sql = await getSql();
@@ -101,6 +109,7 @@ export const sendConnectMessage = createServerFn({ method: "POST" })
       context.userId,
       data.roomId,
       data.body,
+      data.imageId,
     );
     if (result.ok) {
       const { publish, roomChannel } = await realtime();

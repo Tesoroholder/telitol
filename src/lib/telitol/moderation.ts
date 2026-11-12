@@ -211,10 +211,15 @@ export async function listOpenReports(sql: Sql): Promise<ReportGroup[]> {
         when 'answer' then (select a.body from answers a where a.id::text = r.target_id)
         when 'ai_message' then (select m.content from laya_messages m where m.id::text = r.target_id)
         else (
-          select string_agg(m.body, E'\n' order by m.id)
-          from (select body, id from connect_messages
+          -- Photos show as "[photo: <link>]" so moderators can open them.
+          select string_agg(
+                   concat_ws(' ', nullif(m.body, ''),
+                             case when i.url is not null then '[photo: ' || i.url || ']' end),
+                   E'\n' order by m.id)
+          from (select body, id, image_id from connect_messages
                 where room_id = r.target_id and sender_id = r.target_user_id
                 order by id desc limit 10) m
+          left join images i on i.id = m.image_id
         )
       end as preview,
       case r.target_type

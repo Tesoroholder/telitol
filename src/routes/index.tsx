@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { listQuestions } from "@/lib/telitol/server";
 import { WelcomeBanner } from "@/components/welcome-banner";
+import { Avatar } from "@/components/photos";
 import {
   CATEGORIES,
   categoryLabel,
@@ -205,10 +206,28 @@ function HomePage() {
               <h2 className="mt-2 text-lg font-semibold leading-snug">
                 {question.title}
               </h2>
-              <p className="mt-2 line-clamp-2 text-sm text-muted">
-                {question.body}
-              </p>
-              <p className="mt-3 text-sm text-muted">
+              <div className="mt-2 flex gap-3">
+                <p className="line-clamp-2 min-w-0 flex-1 text-sm text-muted">
+                  {question.body}
+                </p>
+                {question.images[0] ? (
+                  <span className="relative shrink-0">
+                    <img
+                      src={question.images[0].url}
+                      alt=""
+                      loading="lazy"
+                      className="size-16 rounded-xl border border-line object-cover"
+                    />
+                    {question.images.length > 1 ? (
+                      <span className="absolute bottom-1 right-1 rounded-full bg-ink/80 px-1.5 text-xs font-semibold text-on-ink tabular-nums">
+                        +{question.images.length - 1}
+                      </span>
+                    ) : null}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-3 flex flex-wrap items-center gap-x-1 text-sm text-muted">
+                <Avatar url={question.authorAvatar} name={question.authorName} size={22} />
                 <span className="font-medium text-ink">
                   {question.authorName}
                 </span>

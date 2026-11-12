@@ -64,6 +64,10 @@ export type QuestionCard = {
   createdAt: string;
   /** When the asker last edited it, or null. */
   editedAt: string | null;
+  /** Photos attached to the question, in order. */
+  images: ImageRef[];
+  /** The asker's profile photo URL, or null. */
+  authorAvatar: string | null;
 };
 
 export type QuestionPage = {
@@ -71,6 +75,18 @@ export type QuestionPage = {
   /** Pass back as `cursor` to load the next page; null on the last page. */
   nextCursor: string | null;
 };
+
+/** A stored photo: public URL plus its size, so layouts don't jump while it loads. */
+export type ImageRef = {
+  /** Present on photos the viewer can re-attach (their own, when editing). */
+  id?: number;
+  url: string;
+  width: number;
+  height: number;
+};
+
+/** A photo the member just uploaded, ready to attach to a post. */
+export type UploadedImage = ImageRef & { id: number };
 
 export type AnswerCard = {
   id: number;
@@ -81,6 +97,9 @@ export type AnswerCard = {
   isMine: boolean;
   voted: boolean;
   createdAt: string;
+  images: ImageRef[];
+  /** The author's profile photo URL, or null. */
+  authorAvatar: string | null;
 };
 
 export type AiMessage = {
@@ -116,6 +135,8 @@ export type MineAnswer = {
 export type ProfileData = {
   displayName: string;
   reputation: number;
+  /** Profile photo URL, or null. */
+  avatarUrl: string | null;
   questions: MineQuestion[];
   answers: MineAnswer[];
 };

@@ -25,6 +25,15 @@ import {
 import { suspensionMessage } from "@/lib/telitol/moderation";
 import { notify } from "@/lib/telitol/notifications";
 import { allowAction, SLOW_DOWN } from "@/lib/telitol/rate-limit";
+import {
+  ANSWER_IMAGES_SQL,
+  AVATAR_URL_SQL,
+  checkImages,
+  cleanImageIds,
+  parseImages,
+  setAnswerImages,
+  setQuestionImages,
+} from "@/lib/telitol/images";
 
 /**
  * Community posts are readable by any signed-in member. Identity on writes,
@@ -136,6 +145,10 @@ export const getProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ProfileData> => {
     const sql = await getSql();
     const profile = await ensureProfile(sql, context.userId, "Member");
+    const avatar = await sql<{ url: string }>`
+      select i.url from profiles p join images i on i.id = p.avatar_image_id
+      where p.user_id = ${context.userId}
+    `;
     const questions = await sql<{
       id: number;
       title: string;
@@ -196,6 +209,7 @@ export const getProfile = createServerFn({ method: "GET" })
     return {
       displayName: profile.displayName,
       reputation: profile.reputation,
+      avatarUrl: avatar[0]?.url ?? null,
       questions: mineQuestions,
       answers: mineAnswers,
     };
@@ -270,7 +284,7 @@ export const getQuestion = createServerFn({ method: "POST" })
       );
       const question = rows[0];
       if (!question) return null;
-      const answers = await sql<{
+      const answers = await sql.query<{
         id: number;
         body: string;
         author_name: string;
@@ -279,25 +293,30 @@ export const getQuestion = createServerFn({ method: "POST" })
         is_mine: unknown;
         voted: unknown;
         created_at: string;
-      }>`
-      select
-        a.id,
-        a.body,
-        coalesce(p.display_name, a.author_name) as author_name,
-        a.helpful,
-        a.is_best,
-        (a.user_id = ${context.userId}) as is_mine,
-        exists (
-          select 1 from helpful_votes v
-          where v.answer_id = a.id and v.user_id = ${context.userId}
-        ) as voted,
-        to_char(a.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at
-      from answers a
-      left join profiles p on p.user_id = a.user_id
-      where a.question_id = ${data.id}
-        and (a.hidden_at is null or a.user_id = ${context.userId})
-      order by a.is_best desc, a.helpful desc, a.created_at asc
-    `;
+        images: unknown;
+        author_avatar: string | null;
+      }>(
+        `select
+          a.id,
+          a.body,
+          coalesce(p.display_name, a.author_name) as author_name,
+          a.helpful,
+          a.is_best,
+          (a.user_id = $1) as is_mine,
+          exists (
+            select 1 from helpful_votes v
+            where v.answer_id = a.id and v.user_id = $1
+          ) as voted,
+          to_char(a.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+          ${ANSWER_IMAGES_SQL} as images,
+          ${AVATAR_URL_SQL} as author_avatar
+        from answers a
+        left join profiles p on p.user_id = a.user_id
+        where a.question_id = $2
+          and (a.hidden_at is null or a.user_id = $1)
+        order by a.is_best desc, a.helpful desc, a.created_at asc`,
+        [context.userId, data.id],
+      );
       const mapped: AnswerCard[] = answers.map((row) => ({
         id: Number(row.id),
         body: row.body,
@@ -307,6 +326,8 @@ export const getQuestion = createServerFn({ method: "POST" })
         isMine: asBool(row.is_mine),
         voted: asBool(row.voted),
         createdAt: row.created_at,
+        images: parseImages(row.images),
+        authorAvatar: row.author_avatar ?? null,
       }));
       return { question: mapQuestion(question), answers: mapped };
     },
@@ -321,6 +342,7 @@ export const createQuestion = createServerFn({ method: "POST" })
       category?: string;
       kind?: string;
       displayName?: string;
+      imageIds?: number[];
     }) => ({
       title: typeof input?.title === "string" ? input.title.trim() : "",
       body: typeof input?.body === "string" ? input.body.trim() : "",
@@ -333,6 +355,7 @@ export const createQuestion = createServerFn({ method: "POST" })
             : "",
       displayName:
         typeof input?.displayName === "string" ? input.displayName : "",
+      imageIds: cleanImageIds(input?.imageIds),
     }),
   )
   .handler(
@@ -344,6 +367,8 @@ export const createQuestion = createServerFn({ method: "POST" })
       if (suspended) return { ok: false, error: suspended };
       if (!(await allowAction(sql, "question", context.userId)))
         return { ok: false, error: SLOW_DOWN };
+      const badImages = await checkImages(sql, context.userId, "question", data.imageIds);
+      if (badImages) return { ok: false, error: badImages };
       const profile = await ensureProfile(
         sql,
         context.userId,
@@ -361,19 +386,27 @@ export const createQuestion = createServerFn({ method: "POST" })
       )
       returning id
     `;
+      const questionId = Number(rows[0]?.id);
+      await setQuestionImages(sql, questionId, data.imageIds);
       await addRep(sql, context.userId, 1);
-      return { ok: true, id: Number(rows[0]?.id) };
+      return { ok: true, id: questionId };
     },
   );
 
 export const createAnswer = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (input: { questionId?: number; body?: string; displayName?: string }) => ({
+    (input: {
+      questionId?: number;
+      body?: string;
+      displayName?: string;
+      imageIds?: number[];
+    }) => ({
       questionId: Number(input?.questionId),
       body: typeof input?.body === "string" ? input.body.trim() : "",
       displayName:
         typeof input?.displayName === "string" ? input.displayName : "",
+      imageIds: cleanImageIds(input?.imageIds),
     }),
   )
   .handler(
@@ -398,6 +431,8 @@ export const createAnswer = createServerFn({ method: "POST" })
       `;
       const question = found[0];
       if (!question) return { ok: false, error: "That question is gone." };
+      const badImages = await checkImages(sql, context.userId, "answer", data.imageIds);
+      if (badImages) return { ok: false, error: badImages };
       const profile = await ensureProfile(
         sql,
         context.userId,
@@ -409,6 +444,7 @@ export const createAnswer = createServerFn({ method: "POST" })
       returning id
     `;
       const answerId = Number(rows[0]?.id);
+      await setAnswerImages(sql, answerId, data.imageIds);
       await addRep(sql, context.userId, 2);
       if (question.user_id !== context.userId) {
         await notify(sql, {
@@ -546,12 +582,15 @@ export const updateQuestion = createServerFn({ method: "POST" })
       body?: string;
       category?: string;
       kind?: string;
+      imageIds?: number[];
     }) => ({
       id: Number(input?.id),
       title: typeof input?.title === "string" ? input.title.trim() : "",
       body: typeof input?.body === "string" ? input.body.trim() : "",
       category: typeof input?.category === "string" ? input.category : "",
       kind: typeof input?.kind === "string" ? input.kind : "",
+      // Absent means "leave the photos as they are".
+      imageIds: Array.isArray(input?.imageIds) ? cleanImageIds(input.imageIds) : undefined,
     }),
   )
   .handler(async ({ context, data }): Promise<{ ok: true } | Err> => {
@@ -560,8 +599,8 @@ export const updateQuestion = createServerFn({ method: "POST" })
     if (suspended) return { ok: false, error: suspended };
     if (!(await allowAction(sql, "questionEdit", context.userId)))
       return { ok: false, error: SLOW_DOWN };
-    const { id, ...input } = data;
-    return updateOwnQuestion(sql, context.userId, id, input);
+    const { id, imageIds, ...input } = data;
+    return updateOwnQuestion(sql, context.userId, id, input, imageIds);
   });
 
 export const deleteQuestion = createServerFn({ method: "POST" })

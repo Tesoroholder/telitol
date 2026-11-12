@@ -5,6 +5,13 @@ import {
   type QuestionKind,
   type QuestionPage,
 } from "./shared.ts";
+import {
+  AVATAR_URL_SQL,
+  checkImages,
+  parseImages,
+  QUESTION_IMAGES_SQL,
+  setQuestionImages,
+} from "./images.ts";
 
 /**
  * Question queries shared by the server functions. Kept free of server-function
@@ -32,6 +39,8 @@ export type QuestionRow = {
   is_hidden: unknown;
   created_at: string;
   edited_at: string | null;
+  images: unknown;
+  author_avatar: string | null;
 };
 
 export function mapQuestion(row: QuestionRow): QuestionCard {
@@ -48,6 +57,8 @@ export function mapQuestion(row: QuestionRow): QuestionCard {
     hidden: asBool(row.is_hidden),
     createdAt: row.created_at,
     editedAt: row.edited_at ?? null,
+    images: parseImages(row.images),
+    authorAvatar: row.author_avatar ?? null,
   };
 }
 
@@ -64,7 +75,9 @@ export const QUESTION_SELECT = `
   (q.hidden_at is not null) as is_hidden,
   (select count(*)::int from answers a where a.question_id = q.id and a.hidden_at is null) as answer_count,
   to_char(q.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
-  to_char(q.edited_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as edited_at
+  to_char(q.edited_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as edited_at,
+  ${QUESTION_IMAGES_SQL} as images,
+  ${AVATAR_URL_SQL} as author_avatar
 `;
 
 export const PAGE_SIZE = 20;
@@ -235,6 +248,8 @@ export async function updateOwnQuestion(
   userId: string,
   id: number,
   input: QuestionInput,
+  /** New photo list (replaces the old one); undefined leaves photos as they are. */
+  imageIds?: number[],
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!Number.isInteger(id) || id <= 0)
     return { ok: false, error: "That question is missing." };
@@ -251,6 +266,12 @@ export async function updateOwnQuestion(
       ok: false,
       error: "This question is hidden while a moderator reviews it, so it can't be edited yet.",
     };
+  if (imageIds) {
+    const badImages = await checkImages(sql, userId, "question", imageIds, {
+      questionId: id,
+    });
+    if (badImages) return { ok: false, error: badImages };
+  }
   await sql`
     update questions
     set title = ${input.title},
@@ -260,5 +281,6 @@ export async function updateOwnQuestion(
         edited_at = now()
     where id = ${id} and user_id = ${userId}
   `;
+  if (imageIds) await setQuestionImages(sql, id, imageIds);
   return { ok: true };
 }

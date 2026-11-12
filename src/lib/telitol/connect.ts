@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Sql } from "../db.ts";
+import { checkImages, parseImages } from "./images.ts";
+import type { ImageRef } from "./shared.ts";
 
 /**
  * Anonymous Connect: match two strangers into a short, timed chat. Plain
@@ -226,6 +228,8 @@ export async function leave(
 export type ConnectMessage = {
   id: number;
   body: string;
+  /** A photo sent with the message, or null. */
+  image: ImageRef | null;
   mine: boolean;
   createdAt: string;
 };
@@ -238,17 +242,27 @@ export async function sendMessage(
   userId: string,
   roomId: string,
   rawBody: string,
+  imageId: number | null = null,
 ): Promise<SendResult> {
   const body = rawBody.trim();
-  if (!body) return { ok: false, error: "Write something first." };
+  if (!body && imageId === null) return { ok: false, error: "Write something first." };
   if (body.length > MAX_MESSAGE_LENGTH)
     return { ok: false, error: "That message is too long." };
   const room = await memberRoom(sql, userId, roomId);
   if (!room) return { ok: false, error: "That chat isn't available." };
   if (!isActive(room)) return { ok: false, error: "This chat has ended." };
+  let image: ImageRef | null = null;
+  if (imageId !== null) {
+    const bad = await checkImages(sql, userId, "connect", [imageId]);
+    if (bad) return { ok: false, error: bad };
+    const found = await sql<{ url: string; width: number; height: number }>`
+      select url, width, height from images where id = ${imageId}
+    `;
+    image = parseImages(found)[0] ?? null;
+  }
   const rows = await sql<{ id: number; created_at: string }>`
-    insert into connect_messages (room_id, sender_id, body)
-    values (${roomId}, ${userId}, ${body})
+    insert into connect_messages (room_id, sender_id, body, image_id)
+    values (${roomId}, ${userId}, ${body}, ${imageId})
     returning id, to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at
   `;
   const row = rows[0];
@@ -257,6 +271,7 @@ export async function sendMessage(
     message: {
       id: Number(row.id),
       body,
+      image,
       mine: true,
       createdAt: row.created_at,
     },
@@ -283,12 +298,17 @@ export async function listMessages(
     body: string;
     sender_id: string;
     created_at: string;
+    image_url: string | null;
+    image_width: number | null;
+    image_height: number | null;
   }>`
-    select id, body, sender_id,
-           to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at
-    from connect_messages
-    where room_id = ${roomId} and id > ${afterId}
-    order by id
+    select m.id, m.body, m.sender_id,
+           to_char(m.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+           i.url as image_url, i.width as image_width, i.height as image_height
+    from connect_messages m
+    left join images i on i.id = m.image_id
+    where m.room_id = ${roomId} and m.id > ${afterId}
+    order by m.id
     limit 200
   `;
   return {
@@ -297,6 +317,9 @@ export async function listMessages(
     messages: rows.map((row) => ({
       id: Number(row.id),
       body: row.body,
+      image: row.image_url
+        ? parseImages([{ url: row.image_url, width: row.image_width, height: row.image_height }])[0] ?? null
+        : null,
       mine: row.sender_id === userId,
       createdAt: row.created_at,
     })),

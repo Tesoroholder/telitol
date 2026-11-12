@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import type * as AblyTypes from "ably";
 import { ErrorNote, PrimaryButton, SecondaryButton } from "@/components/fields";
@@ -15,7 +21,8 @@ import {
   sendConnectMessage,
 } from "@/lib/telitol/connect-server";
 import type { ConnectMessage, ConnectState } from "@/lib/telitol/connect";
-import { CATEGORIES } from "@/lib/telitol/shared";
+import { CATEGORIES, type ImageRef } from "@/lib/telitol/shared";
+import { uploadPhoto, usePhotoSupport } from "@/components/photos";
 
 export const Route = createFileRoute("/connect")({ component: ConnectPage });
 
@@ -38,6 +45,8 @@ function ConnectPage() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [sendingPhoto, setSendingPhoto] = useState(false);
+  const photosOn = usePhotoSupport();
   const [now, setNow] = useState(() => Date.now());
   const lastId = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
@@ -176,13 +185,13 @@ function ConnectPage() {
     await refreshState();
   }
 
-  async function send() {
+  async function send(imageId: number | null = null) {
     const body = draft.trim();
-    if (!body || !roomId || pending) return;
+    if ((!body && imageId === null) || !roomId || pending) return;
     setError("");
     setPending(true);
     try {
-      const result = await sendConnectMessage({ data: { roomId, body } });
+      const result = await sendConnectMessage({ data: { roomId, body, imageId } });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -193,6 +202,23 @@ function ConnectPage() {
       setError("That didn't send. Try again.");
     } finally {
       setPending(false);
+    }
+  }
+
+  /** Pick a photo, upload it, and send it (with any text typed) as one message. */
+  async function sendPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !roomId) return;
+    setError("");
+    setSendingPhoto(true);
+    try {
+      const image = await uploadPhoto(file, "connect");
+      await send(image.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That photo didn't send.");
+    } finally {
+      setSendingPhoto(false);
     }
   }
 
@@ -296,16 +322,21 @@ function ConnectPage() {
           </p>
         ) : null}
         {messages.map((message) => (
-          <p
+          <div
             key={message.id}
-            className={`whitespace-pre-wrap rounded-3xl px-4 py-2 text-sm ${
+            className={`space-y-2 rounded-3xl px-4 py-2 text-sm ${
               message.mine
                 ? "ml-10 bg-ink text-on-ink"
                 : "mr-10 border border-line bg-card"
             }`}
           >
-            {message.body}
-          </p>
+            {message.image ? (
+              <ChatPhoto image={message.image} mine={message.mine} />
+            ) : null}
+            {message.body ? (
+              <p className="whitespace-pre-wrap">{message.body}</p>
+            ) : null}
+          </div>
         ))}
         <div ref={endRef} />
       </section>
@@ -354,6 +385,22 @@ function ConnectPage() {
             <PrimaryButton type="submit" disabled={pending || !draft.trim()}>
               Send
             </PrimaryButton>
+            {photosOn ? (
+              <label
+                className={`inline-flex h-12 cursor-pointer items-center rounded-full border border-line bg-card px-4 text-sm font-semibold ${
+                  pending || sendingPhoto ? "pointer-events-none opacity-50" : ""
+                }`}
+              >
+                {sendingPhoto ? "Sending photo…" : "Photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={pending || sendingPhoto}
+                  onChange={(event) => void sendPhoto(event)}
+                />
+              </label>
+            ) : null}
             <SecondaryButton onClick={() => void leave()}>
               End chat
             </SecondaryButton>
@@ -432,6 +479,35 @@ function WaitingCard({
       <SecondaryButton onClick={onLeave} disabled={pending}>
         Stop looking
       </SecondaryButton>
+    </div>
+  );
+}
+
+/**
+ * A photo in a Connect chat. Photos from the other person start blurred, so
+ * nobody is shown an unwanted image without choosing to see it.
+ */
+function ChatPhoto({ image, mine }: { image: ImageRef; mine: boolean }) {
+  const [shown, setShown] = useState(mine);
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      <img
+        src={image.url}
+        alt={mine ? "Photo you sent" : "Photo from your chat partner"}
+        width={image.width}
+        height={image.height}
+        loading="lazy"
+        className={`max-h-80 w-full object-cover transition ${shown ? "" : "scale-110 blur-2xl"}`}
+      />
+      {shown ? null : (
+        <button
+          type="button"
+          onClick={() => setShown(true)}
+          className="absolute inset-0 grid place-items-center bg-ink/40 text-sm font-semibold text-on-ink"
+        >
+          Photo hidden · Tap to view
+        </button>
+      )}
     </div>
   );
 }

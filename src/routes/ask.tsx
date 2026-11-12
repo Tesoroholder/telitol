@@ -21,12 +21,17 @@ function AskPage() {
       </div>
       <ModeSwitch mode="human" />
       <QuestionForm
-        initial={{ title: "", body: "", category: "", kind: "experience" }}
+        initial={{ title: "", body: "", category: "", kind: "experience", images: [] }}
         submitLabel="Post question"
         pendingLabel="Posting…"
         onSubmit={async (draft) => {
+          const { images, ...fields } = draft;
           const result = await createQuestion({
-            data: { ...draft, displayName: user?.displayName ?? "" },
+            data: {
+              ...fields,
+              imageIds: images.map((image) => image.id),
+              displayName: user?.displayName ?? "",
+            },
           });
           if (!result.ok) return result;
           // "#posted" shows a confirmation on the question page.

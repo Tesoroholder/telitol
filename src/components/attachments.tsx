@@ -1,6 +1,5 @@
 import { useId, useState, type ChangeEvent } from "react";
 import { ErrorNote } from "@/components/fields";
-import { usePhotoSupport } from "@/components/photos";
 import { acceptList, FILE_TYPES, extensionOf, formatBytes } from "@/lib/telitol/attachments";
 import { uploadFile } from "@/lib/telitol/file-client";
 import type { Attachment, UploadedAttachment } from "@/lib/telitol/shared";
@@ -21,13 +20,9 @@ export function AttachmentPicker({
   max: number;
   label?: string;
 }) {
-  // Same storage as photos, so the same "is it set up" check.
-  const supported = usePhotoSupport();
   const inputId = useId();
   const [pending, setPending] = useState<Pending[]>([]);
   const [error, setError] = useState("");
-
-  if (!supported && value.length === 0) return null;
 
   async function onFiles(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
@@ -94,7 +89,7 @@ export function AttachmentPicker({
           ))}
         </ul>
       ) : null}
-      {supported && value.length + pending.length < max ? (
+      {value.length + pending.length < max ? (
         <label
           htmlFor={inputId}
           className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-line bg-card px-4 text-sm font-semibold text-ink"

@@ -57,7 +57,7 @@ export const startAttachmentUpload = createServerFn({ method: "POST" })
       | Err
     > => {
       if (!data.purpose) return { ok: false, error: "Files can't be attached there." };
-      if (!blobConfigured()) return { ok: false, error: "File uploads aren't set up yet." };
+      if (!blobConfigured()) return { ok: false, error: "File uploads aren't switched on yet. The site owner needs to connect Vercel Blob storage." };
       const allowed = checkUploadRequest(data.purpose, data.name, data.size);
       if (!allowed.ok) return allowed;
       const sql = await getSql();

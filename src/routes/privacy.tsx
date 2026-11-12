@@ -44,8 +44,18 @@ function PrivacyPage() {
           to.
         </li>
         <li>
+          <strong>Files.</strong> Documents (such as PDF, Word, Excel,
+          PowerPoint and text files), audio and video you attach to questions
+          or answers, and documents you attach in AI chats. We check each file
+          by its contents, keep its name, type and size, and store it at a
+          long, random web address that isn't listed anywhere. Files on posts
+          are shown to the people who can see the post. Files are not changed,
+          so remove anything private from a document before attaching it.
+        </li>
+        <li>
           <strong>AI chats.</strong> The questions you ask TeliTol AI and its
-          replies. Only you can see them, unless you report a reply, in which
+          replies, and the text read from any document you attach. Only you can
+          see them, unless you report a reply, in which
           case moderators see that reply and any note you add.
         </li>
         <li>
@@ -101,12 +111,13 @@ function PrivacyPage() {
           <strong>Neon</strong> hosts our database.
         </li>
         <li>
-          <strong>Vercel Blob</strong> stores uploaded photos.
+          <strong>Vercel Blob</strong> stores uploaded photos and files.
         </li>
         <li>
           <strong>AI providers</strong> (Groq, Google Gemini, OpenAI or xAI,
           whichever is available) receive your AI question and up to the last
-          10 messages of that chat to write a reply. They do not receive your
+          10 messages of that chat, including text read from documents you
+          attached there, to write a reply. They do not receive your
           name or email address.
         </li>
         <li>
@@ -137,7 +148,8 @@ function PrivacyPage() {
           after 7 days.
         </li>
         <li>
-          Photos from deleted posts, and photos uploaded but never posted:
+          Photos and files from deleted posts, and ones uploaded but never
+          posted:
           deleted within about a day.
         </li>
         <li>
@@ -155,7 +167,7 @@ function PrivacyPage() {
           <Link to="/delete-account" className="text-green underline">
             Delete account
           </Link>{" "}
-          page. This permanently removes your profile, posts, photos, AI
+          page. This permanently removes your profile, posts, photos, files, AI
           chats, Connect chats and sign-in details.
         </li>
         <li>

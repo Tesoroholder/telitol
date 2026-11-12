@@ -21,6 +21,7 @@ import {
 import { allowAction, SLOW_DOWN } from "@/lib/telitol/rate-limit";
 import { isCategory } from "@/lib/telitol/shared";
 import { sweepOrphanImages } from "@/lib/telitol/images";
+import { sweepOrphanAttachments } from "@/lib/telitol/attachments";
 import { deleteBlobs } from "@/lib/telitol/blob.server";
 
 type Err = { ok: false; error: string };
@@ -62,6 +63,7 @@ export const joinConnect = createServerFn({ method: "POST" })
       await purgeOld(sql);
       // Photos from expired chats (and other unused uploads) go with them.
       void sweepOrphanImages(sql, 20).then(deleteBlobs).catch(() => {});
+      void sweepOrphanAttachments(sql, 20).then(deleteBlobs).catch(() => {});
       const result = await withTransaction((tx) =>
         joinQueue(tx, context.userId, data.topic),
       );

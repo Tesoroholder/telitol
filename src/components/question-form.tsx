@@ -1,10 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { AreaField, ErrorNote, PrimaryButton, TextField } from "@/components/fields";
 import { PhotoPicker } from "@/components/photos";
+import { AttachmentPicker } from "@/components/attachments";
 import {
   CATEGORIES,
   type CategoryId,
   type QuestionKind,
+  type UploadedAttachment,
   type UploadedImage,
 } from "@/lib/telitol/shared";
 
@@ -14,6 +16,7 @@ export type QuestionDraft = {
   category: CategoryId | "";
   kind: QuestionKind;
   images: UploadedImage[];
+  files: UploadedAttachment[];
 };
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -38,6 +41,7 @@ export function QuestionForm({
   const [title, setTitle] = useState(initial.title);
   const [body, setBody] = useState(initial.body);
   const [images, setImages] = useState<UploadedImage[]>(initial.images);
+  const [files, setFiles] = useState<UploadedAttachment[]>(initial.files);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -46,7 +50,7 @@ export function QuestionForm({
     setError("");
     setPending(true);
     try {
-      const result = await onSubmit({ title, body, category, kind, images });
+      const result = await onSubmit({ title, body, category, kind, images, files });
       if (!result.ok) setError(result.error);
     } catch {
       setError("Couldn't save that. Try again.");
@@ -116,6 +120,7 @@ export function QuestionForm({
         }
       />
       <PhotoPicker purpose="question" value={images} onChange={setImages} max={4} />
+      <AttachmentPicker purpose="question" value={files} onChange={setFiles} max={3} />
       <p className="text-sm text-muted tabular-nums">{title.trim().length}/140</p>
       <ErrorNote message={error} />
       <div className="flex flex-wrap gap-2">

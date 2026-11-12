@@ -16,6 +16,7 @@ import { Pool } from "pg";
 import { ensureDbReady, getPglite, withTransaction } from "../db";
 import { deleteUserData } from "../telitol/account";
 import { imageUrlsOf } from "../telitol/images";
+import { attachmentUrlsOf } from "../telitol/attachments";
 import { deleteBlobs } from "../telitol/blob.server";
 import { passwordResetEmail, sendEmail } from "../email.server";
 import { env } from "../env.server";
@@ -145,7 +146,10 @@ export const auth = betterAuth({
       enabled: true,
       beforeDelete: async (user) => {
         const photos = await withTransaction(async (tx) => {
-          const urls = await imageUrlsOf(tx, user.id);
+          const urls = [
+            ...(await imageUrlsOf(tx, user.id)),
+            ...(await attachmentUrlsOf(tx, user.id)),
+          ];
           await deleteUserData(tx, user.id);
           return urls;
         });

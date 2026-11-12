@@ -12,6 +12,12 @@ import {
   QUESTION_IMAGES_SQL,
   setQuestionImages,
 } from "./images.ts";
+import {
+  checkAttachments,
+  parseAttachments,
+  QUESTION_FILES_SQL,
+  setQuestionAttachments,
+} from "./attachments.ts";
 
 /**
  * Question queries shared by the server functions. Kept free of server-function
@@ -40,6 +46,7 @@ export type QuestionRow = {
   created_at: string;
   edited_at: string | null;
   images: unknown;
+  files: unknown;
   author_avatar: string | null;
 };
 
@@ -58,6 +65,7 @@ export function mapQuestion(row: QuestionRow): QuestionCard {
     createdAt: row.created_at,
     editedAt: row.edited_at ?? null,
     images: parseImages(row.images),
+    files: parseAttachments(row.files),
     authorAvatar: row.author_avatar ?? null,
   };
 }
@@ -77,6 +85,7 @@ export const QUESTION_SELECT = `
   to_char(q.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
   to_char(q.edited_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as edited_at,
   ${QUESTION_IMAGES_SQL} as images,
+  ${QUESTION_FILES_SQL} as files,
   ${AVATAR_URL_SQL} as author_avatar
 `;
 
@@ -250,6 +259,8 @@ export async function updateOwnQuestion(
   input: QuestionInput,
   /** New photo list (replaces the old one); undefined leaves photos as they are. */
   imageIds?: number[],
+  /** New file list, the same way. */
+  fileIds?: number[],
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!Number.isInteger(id) || id <= 0)
     return { ok: false, error: "That question is missing." };
@@ -272,6 +283,12 @@ export async function updateOwnQuestion(
     });
     if (badImages) return { ok: false, error: badImages };
   }
+  if (fileIds) {
+    const badFiles = await checkAttachments(sql, userId, "question", fileIds, {
+      questionId: id,
+    });
+    if (badFiles) return { ok: false, error: badFiles };
+  }
   await sql`
     update questions
     set title = ${input.title},
@@ -282,5 +299,6 @@ export async function updateOwnQuestion(
     where id = ${id} and user_id = ${userId}
   `;
   if (imageIds) await setQuestionImages(sql, id, imageIds);
+  if (fileIds) await setQuestionAttachments(sql, id, fileIds);
   return { ok: true };
 }

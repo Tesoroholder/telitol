@@ -10,7 +10,7 @@ export const DELETED_ITEMS = [
   "Your profile, name and reputation",
   "Questions you asked, and the answers under them",
   "Answers you wrote and helpful votes you gave",
-  "Photos you uploaded, including your profile photo",
+  "Photos and files you uploaded, including your profile photo",
   "Your private AI chats",
   "Your Connect chats, blocks and place in the queue",
   "Your notifications and the reports you filed",

@@ -6,9 +6,12 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import android.view.View;
 import android.view.Window;
 import android.webkit.CookieManager;
+import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -134,11 +137,39 @@ public class MainActivity extends Activity {
                 pendingFiles = callback;
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
+                // The page's accept list mixes ".pdf" and "application/pdf";
+                // the picker wants MIME types only.
+                Set<String> mimes = new LinkedHashSet<>();
+                String[] accepts = params.getAcceptTypes();
+                if (accepts != null) {
+                    for (String entry : accepts) {
+                        for (String raw : entry.split(",")) {
+                            String type = raw.trim().toLowerCase();
+                            if (type.startsWith(".")) {
+                                type = MimeTypeMap.getSingleton()
+                                        .getMimeTypeFromExtension(type.substring(1));
+                            }
+                            if (type != null && type.contains("/")) mimes.add(type);
+                        }
+                    }
+                }
+                boolean photosOnly = !mimes.isEmpty();
+                for (String type : mimes) {
+                    if (!type.startsWith("image/")) photosOnly = false;
+                }
+                if (mimes.size() == 1) {
+                    intent.setType(mimes.iterator().next());
+                } else {
+                    intent.setType(mimes.isEmpty() ? "*/*" : (photosOnly ? "image/*" : "*/*"));
+                    if (mimes.size() > 1) {
+                        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimes.toArray(new String[0]));
+                    }
+                }
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,
                         params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                String title = photosOnly ? "Choose a photo" : "Choose a file";
                 try {
-                    startActivityForResult(Intent.createChooser(intent, "Choose a photo"), PICK_FILE);
+                    startActivityForResult(Intent.createChooser(intent, title), PICK_FILE);
                 } catch (Exception e) {
                     pendingFiles = null;
                     callback.onReceiveValue(null);

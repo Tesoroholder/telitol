@@ -17,6 +17,7 @@ import {
 } from "@/lib/telitol/server";
 import { QuestionForm, type QuestionDraft } from "@/components/question-form";
 import { Avatar, PhotoGallery, PhotoPicker } from "@/components/photos";
+import { AttachmentList, AttachmentPicker } from "@/components/attachments";
 import { reportContent } from "@/lib/telitol/moderation-server";
 import { ReportButton } from "@/components/report-button";
 import {
@@ -26,6 +27,7 @@ import {
   kindLabel,
   type AnswerCard,
   type QuestionCard,
+  type UploadedAttachment,
   type UploadedImage,
 } from "@/lib/telitol/shared";
 
@@ -41,6 +43,7 @@ function QuestionPage() {
   const [error, setError] = useState("");
   const [body, setBody] = useState("");
   const [answerImages, setAnswerImages] = useState<UploadedImage[]>([]);
+  const [answerFiles, setAnswerFiles] = useState<UploadedAttachment[]>([]);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -88,6 +91,7 @@ function QuestionPage() {
           body,
           displayName: user?.displayName ?? "",
           imageIds: answerImages.map((image) => image.id),
+          fileIds: answerFiles.map((file) => file.id),
         },
       });
       if (!result.ok) {
@@ -101,6 +105,7 @@ function QuestionPage() {
       }
       setBody("");
       setAnswerImages([]);
+      setAnswerFiles([]);
     } catch {
       setError("Couldn't post that answer.");
     } finally {
@@ -144,9 +149,14 @@ function QuestionPage() {
 
   async function onSaveEdit(draft: QuestionDraft) {
     if (!question) return { ok: false as const, error: "That question is missing." };
-    const { images, ...fields } = draft;
+    const { images, files, ...fields } = draft;
     const result = await updateQuestion({
-      data: { id: question.id, ...fields, imageIds: images.map((image) => image.id) },
+      data: {
+        id: question.id,
+        ...fields,
+        imageIds: images.map((image) => image.id),
+        fileIds: files.map((file) => file.id),
+      },
     });
     if (!result.ok) return result;
     const detail = await getQuestion({ data: { id: question.id } });
@@ -234,6 +244,9 @@ function QuestionPage() {
               images: question.images.flatMap((image) =>
                 image.id ? [{ ...image, id: image.id }] : [],
               ),
+              files: question.files.flatMap((file) =>
+                file.id ? [{ ...file, id: file.id }] : [],
+              ),
             }}
             submitLabel="Save changes"
             pendingLabel="Saving…"
@@ -264,6 +277,7 @@ function QuestionPage() {
         </h1>
         <p className="whitespace-pre-wrap text-base">{question.body}</p>
         <PhotoGallery images={question.images} />
+        <AttachmentList files={question.files} />
         <p className="flex flex-wrap items-center gap-x-1 text-sm text-muted">
           <Avatar url={question.authorAvatar} name={question.authorName} size={24} />
           <span className="font-medium text-ink">{question.authorName}</span>
@@ -375,6 +389,11 @@ function QuestionPage() {
                   <PhotoGallery images={answer.images} />
                 </div>
               ) : null}
+              {answer.files.length > 0 ? (
+                <div className="mt-3">
+                  <AttachmentList files={answer.files} />
+                </div>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {answer.isMine ? (
                   <span className="text-sm text-muted">Your answer</span>
@@ -428,6 +447,12 @@ function QuestionPage() {
           purpose="answer"
           value={answerImages}
           onChange={setAnswerImages}
+          max={2}
+        />
+        <AttachmentPicker
+          purpose="answer"
+          value={answerFiles}
+          onChange={setAnswerFiles}
           max={2}
         />
         <ErrorNote message={question ? error : ""} />

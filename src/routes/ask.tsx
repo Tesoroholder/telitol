@@ -21,15 +21,16 @@ function AskPage() {
       </div>
       <ModeSwitch mode="human" />
       <QuestionForm
-        initial={{ title: "", body: "", category: "", kind: "experience", images: [] }}
+        initial={{ title: "", body: "", category: "", kind: "experience", images: [], files: [] }}
         submitLabel="Post question"
         pendingLabel="Posting…"
         onSubmit={async (draft) => {
-          const { images, ...fields } = draft;
+          const { images, files, ...fields } = draft;
           const result = await createQuestion({
             data: {
               ...fields,
               imageIds: images.map((image) => image.id),
+              fileIds: files.map((file) => file.id),
               displayName: user?.displayName ?? "",
             },
           });

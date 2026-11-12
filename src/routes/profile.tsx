@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { UserButton } from "@/components/user-button";
 import { DeleteAccount } from "@/components/delete-account";
+import { ProfilePhoto } from "@/components/profile-photo";
 import { LegalLinks } from "@/components/public-page";
 import { ErrorNote, PrimaryButton, TextField } from "@/components/fields";
 import { getProfile, updateProfile } from "@/lib/telitol/server";
@@ -77,13 +78,24 @@ function ProfilePage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {profile?.displayName ?? "You"}
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          {profile ? reputationLabel(profile.reputation) : ""}
-        </p>
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {profile?.displayName ?? "You"}
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            {profile ? reputationLabel(profile.reputation) : ""}
+          </p>
+        </div>
+        {profile ? (
+          <ProfilePhoto
+            url={profile.avatarUrl}
+            name={profile.displayName}
+            onChange={(avatarUrl) =>
+              setProfile((current) => (current ? { ...current, avatarUrl } : current))
+            }
+          />
+        ) : null}
       </div>
 
       {profile ? (

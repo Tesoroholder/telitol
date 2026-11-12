@@ -44,6 +44,11 @@ export async function deleteUserData(tx: Sql, userId: string): Promise<void> {
   // Pending password-reset tokens point at the user id.
   await tx`delete from verification where value = ${userId}`;
 
+  // Photo records (the files themselves are deleted from storage by the caller,
+  // using imageUrlsOf() read before this runs).
+  await tx`update profiles set avatar_image_id = null where user_id = ${userId}`;
+  await tx`delete from images where user_id = ${userId}`;
+
   await tx`delete from profiles where user_id = ${userId}`;
 }
 

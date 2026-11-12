@@ -36,6 +36,14 @@ function PrivacyPage() {
           your display name.
         </li>
         <li>
+          <strong>Photos.</strong> Photos you add to questions, answers, your
+          profile or Connect chats. The app shrinks each photo and removes its
+          hidden details, including location, before it is uploaded. Photos are
+          stored at a long, random web address that isn't listed anywhere, and
+          they are shown to the people who can see the post or chat they belong
+          to.
+        </li>
+        <li>
           <strong>AI chats.</strong> The questions you ask TeliTol AI and its
           replies. Only you can see them, unless you report a reply, in which
           case moderators see that reply and any note you add.
@@ -93,6 +101,9 @@ function PrivacyPage() {
           <strong>Neon</strong> hosts our database.
         </li>
         <li>
+          <strong>Vercel Blob</strong> stores uploaded photos.
+        </li>
+        <li>
           <strong>AI providers</strong> (Groq, Google Gemini, OpenAI or xAI,
           whichever is available) receive your AI question and up to the last
           10 messages of that chat to write a reply. They do not receive your
@@ -121,7 +132,14 @@ function PrivacyPage() {
           Account, profile, posts and AI chats: until you delete them or delete
           your account.
         </li>
-        <li>Connect chats: deleted automatically after 7 days.</li>
+        <li>
+          Connect chats, including photos sent in them: deleted automatically
+          after 7 days.
+        </li>
+        <li>
+          Photos from deleted posts, and photos uploaded but never posted:
+          deleted within about a day.
+        </li>
         <li>
           Moderation decisions: kept as a record of how reports were handled.
         </li>
@@ -137,8 +155,8 @@ function PrivacyPage() {
           <Link to="/delete-account" className="text-green underline">
             Delete account
           </Link>{" "}
-          page. This permanently removes your profile, posts, AI chats,
-          Connect chats and sign-in details.
+          page. This permanently removes your profile, posts, photos, AI
+          chats, Connect chats and sign-in details.
         </li>
         <li>
           Ask us for a copy of your data, or to correct it, using the contact

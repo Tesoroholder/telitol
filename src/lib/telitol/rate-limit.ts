@@ -4,6 +4,7 @@ import type { Sql } from "@/lib/db";
 export const LIMITS = {
   question: { max: 10, windowSeconds: 3600 },
   questionEdit: { max: 30, windowSeconds: 3600 },
+  imageUpload: { max: 40, windowSeconds: 3600 },
   answer: { max: 30, windowSeconds: 3600 },
   vote: { max: 120, windowSeconds: 3600 },
   ai: { max: 30, windowSeconds: 3600 },

@@ -15,6 +15,8 @@ import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite, withTransaction } from "../db";
 import { deleteUserData } from "../telitol/account";
+import { imageUrlsOf } from "../telitol/images";
+import { deleteBlobs } from "../telitol/blob.server";
 import { passwordResetEmail, sendEmail } from "../email.server";
 import { env } from "../env.server";
 import { pgliteDialect } from "./pglite-dialect";
@@ -142,7 +144,13 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
       beforeDelete: async (user) => {
-        await withTransaction((tx) => deleteUserData(tx, user.id));
+        const photos = await withTransaction(async (tx) => {
+          const urls = await imageUrlsOf(tx, user.id);
+          await deleteUserData(tx, user.id);
+          return urls;
+        });
+        // Records are gone; now the files. Best effort, never blocks deletion.
+        await deleteBlobs(photos);
       },
     },
   },

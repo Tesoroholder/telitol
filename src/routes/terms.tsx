@@ -44,6 +44,11 @@ function TermsPage() {
         </li>
         <li>Share someone else's private information without permission.</li>
         <li>
+          Post photos of other people without their permission, or photos that
+          are sexual, violent or shocking. In Connect, photos from your chat
+          partner stay hidden until you choose to view them.
+        </li>
+        <li>
           Post spam, ads, scams or links meant to trick people, or try to
           break or overload TeliTol.
         </li>

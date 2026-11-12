@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -25,8 +27,11 @@ public class MainActivity extends Activity {
             "api.x.com",
             "twitter.com",
             "api.twitter.com"));
+    private static final int PICK_FILE = 1001;
     private WebView web;
     private boolean isError = false;
+    /** Waiting <input type="file"> from the page; answered in onActivityResult. */
+    private ValueCallback<Uri[]> pendingFiles;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +62,7 @@ public class MainActivity extends Activity {
         settings.setDisplayZoomControls(false);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
-        settings.setUserAgentString(settings.getUserAgentString() + " TeliTolApp/1.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " TeliTolApp/1.2");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -118,7 +123,55 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Without this, "Add photo" buttons (<input type="file">) do nothing in a WebView.
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
+                                             FileChooserParams params) {
+                if (pendingFiles != null) {
+                    pendingFiles.onReceiveValue(null);
+                }
+                pendingFiles = callback;
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,
+                        params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                try {
+                    startActivityForResult(Intent.createChooser(intent, "Choose a photo"), PICK_FILE);
+                } catch (Exception e) {
+                    pendingFiles = null;
+                    callback.onReceiveValue(null);
+                    return false;
+                }
+                return true;
+            }
+        });
+
         web.loadUrl(LIVE_URL);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != PICK_FILE) {
+            super.onActivityResult(requestCode, resultCode, data);
+            return;
+        }
+        if (pendingFiles == null) return;
+        Uri[] result = null;
+        if (resultCode == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                int count = data.getClipData().getItemCount();
+                result = new Uri[count];
+                for (int i = 0; i < count; i++) {
+                    result[i] = data.getClipData().getItemAt(i).getUri();
+                }
+            } else if (data.getData() != null) {
+                result = new Uri[] { data.getData() };
+            }
+        }
+        pendingFiles.onReceiveValue(result);
+        pendingFiles = null;
     }
 
     private void showOfflinePage() {

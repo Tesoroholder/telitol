@@ -1,9 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { AreaField, ErrorNote, PrimaryButton, TextField } from "@/components/fields";
+import { PhotoPicker } from "@/components/photos";
 import {
   CATEGORIES,
   type CategoryId,
   type QuestionKind,
+  type UploadedImage,
 } from "@/lib/telitol/shared";
 
 export type QuestionDraft = {
@@ -11,6 +13,7 @@ export type QuestionDraft = {
   body: string;
   category: CategoryId | "";
   kind: QuestionKind;
+  images: UploadedImage[];
 };
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -34,6 +37,7 @@ export function QuestionForm({
   const [category, setCategory] = useState<CategoryId | "">(initial.category);
   const [title, setTitle] = useState(initial.title);
   const [body, setBody] = useState(initial.body);
+  const [images, setImages] = useState<UploadedImage[]>(initial.images);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -42,7 +46,7 @@ export function QuestionForm({
     setError("");
     setPending(true);
     try {
-      const result = await onSubmit({ title, body, category, kind });
+      const result = await onSubmit({ title, body, category, kind, images });
       if (!result.ok) setError(result.error);
     } catch {
       setError("Couldn't save that. Try again.");
@@ -111,6 +115,7 @@ export function QuestionForm({
             : "What you're stuck on, and what you've already tried."
         }
       />
+      <PhotoPicker purpose="question" value={images} onChange={setImages} max={4} />
       <p className="text-sm text-muted tabular-nums">{title.trim().length}/140</p>
       <ErrorNote message={error} />
       <div className="flex flex-wrap gap-2">
